@@ -1,0 +1,5 @@
+<library path="mujoco_system_plugins.xml">
+  <class type="mujoco_ros2_control::MujocoSystem" base_class_type="mujoco_ros2_control::MujocoSystemInterface">
+    <description>MujocoSystem plugin</description>
+  </class>
+</library>
