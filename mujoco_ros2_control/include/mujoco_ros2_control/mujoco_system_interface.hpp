@@ -17,7 +17,7 @@ public:
     const hardware_interface::HardwareInfo & hardware_info) = 0;
 
 protected:
-  rclcpp::Node::SharedPtr node_;
+  rclcpp::Node::SharedPtr node_;  // TODO: need node?
 };
 }  // namespace mujoco_ros2_control
 

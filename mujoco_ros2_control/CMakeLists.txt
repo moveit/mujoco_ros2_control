@@ -29,7 +29,7 @@ find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
 include_directories(include)
 
 # TODO: make it simple
-add_executable(mujoco_ros2_control src/mujoco_ros2_control.cpp src/mujoco_rendering.cpp)
+add_executable(mujoco_ros2_control src/mujoco_ros2_control_node.cpp src/mujoco_rendering.cpp)
 ament_target_dependencies(mujoco_ros2_control ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_ros2_control ${MUJOCO_LIB} glfw)
 target_include_directories(mujoco_ros2_control PUBLIC $ENV{MUJOCO_DIR}/include)

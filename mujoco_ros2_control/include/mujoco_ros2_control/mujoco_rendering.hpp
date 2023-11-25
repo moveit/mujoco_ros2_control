@@ -31,7 +31,7 @@ private:
   void scroll_callback_impl(GLFWwindow* window, double xoffset, double yoffset);
 
   static MujocoRendering* instance_;
-  rclcpp::Node::SharedPtr node_;
+  rclcpp::Node::SharedPtr node_;  // TODO: delete node and add logger
   mjModel* mj_model_;
   mjData* mj_data_;
   mjvCamera mjv_cam_;
