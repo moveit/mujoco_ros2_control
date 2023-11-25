@@ -187,7 +187,7 @@ void MujocoSystem::register_sensors(const hardware_interface::HardwareInfo & har
     // TODO
   }
 }
-} // namespace gazebo_ros2_control
+} // namespace mujoco_ros2_control
 
 #include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS(mujoco_ros2_control::MujocoSystem, mujoco_ros2_control::MujocoSystemInterface)

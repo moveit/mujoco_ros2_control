@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.5)
 project(mujoco_ros2_control)
 
-# Default to C++17
+# Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
@@ -17,7 +17,26 @@ find_package(rclcpp REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 
+set(THIS_PACKAGE_DEPENDS
+  ament_cmake
+  rclcpp
+  hardware_interface
+  pluginlib
+)
+
+find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
+
 include_directories(include)
+
+# TODO: make it simple
+add_executable(mujoco_ros2_control src/mujoco_ros2_control.cpp src/mujoco_rendering.cpp)
+ament_target_dependencies(mujoco_ros2_control ${THIS_PACKAGE_DEPENDS})
+target_link_libraries(mujoco_ros2_control ${MUJOCO_LIB} glfw)
+target_include_directories(mujoco_ros2_control PUBLIC $ENV{MUJOCO_DIR}/include)
+
+install(TARGETS
+  mujoco_ros2_control
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
