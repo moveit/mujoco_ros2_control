@@ -104,7 +104,6 @@ void MujocoRos2Control::init()
   // Force setting of use_sime_time parameter
   controller_manager_->set_parameter(rclcpp::Parameter("use_sim_time", rclcpp::ParameterValue(true)));
 
-  // TODO: mutex
   stop_cm_thread_ = false;
   auto spin = [this]()
     {
@@ -141,7 +140,7 @@ void MujocoRos2Control::update()
   mj_step2(mj_model_, mj_data_);
 }
 
-void publish_sim_time(rclcpp::Time sim_time)
+void MujocoRos2Control::publish_sim_time(rclcpp::Time sim_time)
 {
   // TODO
 }

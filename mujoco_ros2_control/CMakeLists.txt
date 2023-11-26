@@ -16,12 +16,15 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(controller_manager REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 set(THIS_PACKAGE_DEPENDS
   ament_cmake
   rclcpp
   hardware_interface
   pluginlib
+  controller_manager
 )
 
 find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
@@ -29,10 +32,10 @@ find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
 include_directories(include)
 
 # TODO: make it simple
-add_executable(mujoco_ros2_control src/mujoco_ros2_control_node.cpp src/mujoco_rendering.cpp)
+add_executable(mujoco_ros2_control src/mujoco_ros2_control_node.cpp src/mujoco_rendering.cpp src/mujoco_ros2_control.cpp)
 ament_target_dependencies(mujoco_ros2_control ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_ros2_control ${MUJOCO_LIB} glfw)
-target_include_directories(mujoco_ros2_control PUBLIC $ENV{MUJOCO_DIR}/include)
+target_include_directories(mujoco_ros2_control PUBLIC $ENV{MUJOCO_DIR}/include ${EIGEN3_INCLUDE_DIR})
 
 install(TARGETS
   mujoco_ros2_control

@@ -2,6 +2,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "mujoco/mujoco.h"
 
+#include "mujoco_ros2_control/mujoco_ros2_control.hpp"
 #include "mujoco_ros2_control/mujoco_rendering.hpp"
 
 // MuJoCo data structures
@@ -34,6 +35,10 @@ int main(int argc, const char** argv) {
   // make data
   mujoco_data = mj_makeData(mujoco_model);
 
+  // initialize mujoco control
+  auto control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
+  control.init();
+
   // initialize mujoco redering
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
   rendering->init(node, mujoco_model, mujoco_data);
@@ -46,7 +51,7 @@ int main(int argc, const char** argv) {
     //  Otherwise add a cpu timer and exit this loop when it is time to render.
     mjtNum simstart = mujoco_data->time;
     while (mujoco_data->time - simstart < 1.0/60.0) {
-      mj_step(mujoco_model, mujoco_data);
+      control.update();
     }
     rendering->update();
   }
