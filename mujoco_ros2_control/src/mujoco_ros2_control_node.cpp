@@ -13,20 +13,16 @@ mjData* mujoco_data = nullptr;
 int main(int argc, const char** argv) {
 
   rclcpp::init(argc, argv);
-  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("mujoco_ros2_control");
+  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("mujoco_ros2_control", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
 
-  // check command-line arguments
-  if (argc!=2) {
-    std::printf(" USAGE:  basic modelfile\n");
-    return 0;
-  }
+  auto model_path = node->get_parameter("mujoco_model_path").as_string();
 
   // load and compile model
   char error[1000] = "Could not load binary model";
-  if (std::strlen(argv[1])>4 && !std::strcmp(argv[1]+std::strlen(argv[1])-4, ".mjb")) {
-    mujoco_model = mj_loadModel(argv[1], 0);
+  if (std::strlen(model_path.c_str())>4 && !std::strcmp(model_path.c_str()+std::strlen(model_path.c_str())-4, ".mjb")) {
+    mujoco_model = mj_loadModel(model_path.c_str(), 0);
   } else {
-    mujoco_model = mj_loadXML(argv[1], 0, error, 1000);
+    mujoco_model = mj_loadXML(model_path.c_str(), 0, error, 1000);
   }
   if (!mujoco_model) {
     mju_error("Load model error: %s", error);

@@ -5,3 +5,6 @@ log/
 
 # vscode
 **/.vscode
+
+# mujoco log
+**/MUJOCO_LOG.TXT

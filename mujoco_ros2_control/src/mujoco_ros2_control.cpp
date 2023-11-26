@@ -8,7 +8,7 @@ namespace mujoco_ros2_control
 {
 MujocoRos2Control::MujocoRos2Control(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data)
   : node_(node), mj_model_(mujoco_model), mj_data_(mujoco_data), logger_(rclcpp::get_logger("mujoco_ros2_control")),
-    control_period_(rclcpp::Duration(1, 0))
+    control_period_(rclcpp::Duration(1, 0)), last_update_sim_time_ros_(0, 0, RCL_ROS_TIME)
 {
 }
 
@@ -83,6 +83,7 @@ void MujocoRos2Control::init()
   }
 
   // Create the controller manager
+  // TODO: controller manager subscribe to ~/robot_description
   RCLCPP_INFO(logger_, "Loading controller_manager");
   cm_executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   controller_manager_.reset(new controller_manager::ControllerManager(

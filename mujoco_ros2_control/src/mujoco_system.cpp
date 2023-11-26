@@ -135,6 +135,8 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
       }
     };
 
+    // TODO: get min, max value
+
     // state interfaces
     for (const auto& state_if : joint.state_interfaces)
     {
