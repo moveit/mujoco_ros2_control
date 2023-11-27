@@ -83,7 +83,6 @@ void MujocoRos2Control::init()
   }
 
   // Create the controller manager
-  // TODO: controller manager subscribe to ~/robot_description
   RCLCPP_INFO(logger_, "Loading controller_manager");
   cm_executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   controller_manager_.reset(new controller_manager::ControllerManager(

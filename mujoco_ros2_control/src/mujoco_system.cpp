@@ -95,7 +95,7 @@ bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model
   register_sensors(hardware_info);
 
   // TODO: set initial pose
-
+  return true;
 }
 
 void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hardware_info)

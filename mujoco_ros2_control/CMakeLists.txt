@@ -31,6 +31,18 @@ find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
 
 include_directories(include)
 
+add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp)
+ament_target_dependencies(mujoco_system_plugins ${THIS_PACKAGE_DEPENDS})
+target_link_libraries(mujoco_system_plugins ${MUJOCO_LIB} glfw)
+target_include_directories(mujoco_system_plugins PUBLIC $ENV{MUJOCO_DIR}/include ${EIGEN3_INCLUDE_DIR})
+
+install(TARGETS
+  mujoco_system_plugins
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
 # TODO: make it simple
 add_executable(mujoco_ros2_control src/mujoco_ros2_control_node.cpp src/mujoco_rendering.cpp src/mujoco_ros2_control.cpp)
 ament_target_dependencies(mujoco_ros2_control ${THIS_PACKAGE_DEPENDS})
