@@ -34,9 +34,6 @@ public:
     int mj_joint_type;
     int mj_pos_adr;
     int mj_vel_adr;
-    int mj_pos_ctrl_id;
-    int mj_vel_ctrl_id;
-    int mj_effort_ctrl_id;
   };
 
   template <typename T>

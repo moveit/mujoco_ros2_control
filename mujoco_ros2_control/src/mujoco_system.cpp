@@ -48,38 +48,17 @@ hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, c
   {
     if (joint_state.is_position_control_enabled)
     {
-      if (joint_state.mj_pos_ctrl_id != -1)
-      {
-        mj_data_->ctrl[joint_state.mj_pos_ctrl_id] = joint_state.position_command;
-      }
-      else
-      {
-        mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position_command;
-      }
+      mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position_command;
     }
 
     if (joint_state.is_velocity_control_enabled)
     {
-      if (joint_state.mj_vel_ctrl_id != -1)
-      {
-        mj_data_->ctrl[joint_state.mj_vel_ctrl_id] = joint_state.velocity_command;
-      }
-      else
-      {
-        mj_data_->qvel[joint_state.mj_vel_adr] = joint_state.velocity_command;
-      }
+      mj_data_->qvel[joint_state.mj_vel_adr] = joint_state.velocity_command;
     }
 
     if (joint_state.is_effort_control_enabled)
     {
-      if (joint_state.mj_effort_ctrl_id != -1)
-      {
-        mj_data_->ctrl[joint_state.mj_effort_ctrl_id] = joint_state.effort_command;
-      }
-      else
-      {
-        mj_data_->qfrc_applied[joint_state.mj_vel_adr] = joint_state.effort_command;
-      }
+      mj_data_->qfrc_applied[joint_state.mj_vel_adr] = joint_state.effort_command;
     }
   }
 }
@@ -116,9 +95,6 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
     joint_state.mj_joint_type = mj_model_->jnt_type[joint_id];
     joint_state.mj_pos_adr = mj_model_->jnt_qposadr[joint_id];
     joint_state.mj_vel_adr = mj_model_->jnt_dofadr[joint_id];
-    joint_state.mj_pos_ctrl_id = mj_name2id(mj_model_, mjtObj::mjOBJ_ACTUATOR, (joint.name + "_position").c_str());
-    joint_state.mj_vel_ctrl_id = mj_name2id(mj_model_, mjtObj::mjOBJ_ACTUATOR, (joint.name + "_velocity").c_str());
-    joint_state.mj_effort_ctrl_id = mj_name2id(mj_model_, mjtObj::mjOBJ_ACTUATOR, (joint.name + "_effort").c_str());
 
     joint_states_.push_back(joint_state);
 

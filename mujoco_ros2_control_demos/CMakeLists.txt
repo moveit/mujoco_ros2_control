@@ -37,8 +37,16 @@ install(DIRECTORY
 add_executable(example_position examples/example_position.cpp)
 ament_target_dependencies(example_position ${THIS_PACKAGE_DEPENDS})
 
+add_executable(example_velocity examples/example_velocity.cpp)
+ament_target_dependencies(example_velocity ${THIS_PACKAGE_DEPENDS})
+
+add_executable(example_effort examples/example_effort.cpp)
+ament_target_dependencies(example_effort ${THIS_PACKAGE_DEPENDS})
+
 install(TARGETS
     example_position
+    example_velocity
+    example_effort
   DESTINATION lib/${PROJECT_NAME}
 )
 
