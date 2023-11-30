@@ -61,13 +61,6 @@
     <dynamics damping="0.0" friction="0.0"/>
   </joint>
 
-  <gazebo reference="imu">
-    <sensor name="cart_imu_sensor" type="imu">
-      <always_on>1</always_on>
-      <update_rate>10.0</update_rate>
-    </sensor>
-  </gazebo>
-
   <ros2_control name="MujocoSystem" type="system">
     <hardware>
       <plugin>mujoco_ros2_control/MujocoSystem</plugin>

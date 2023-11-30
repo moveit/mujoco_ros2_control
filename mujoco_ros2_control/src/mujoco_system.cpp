@@ -48,17 +48,17 @@ hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, c
   {
     if (joint_state.is_position_control_enabled)
     {
-      mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position_command;
+      mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.clamp_position_cmd();
     }
 
     if (joint_state.is_velocity_control_enabled)
     {
-      mj_data_->qvel[joint_state.mj_vel_adr] = joint_state.velocity_command;
+      mj_data_->qvel[joint_state.mj_vel_adr] = joint_state.clamp_velocity_cmd();
     }
 
     if (joint_state.is_effort_control_enabled)
     {
-      mj_data_->qfrc_applied[joint_state.mj_vel_adr] = joint_state.effort_command;
+      mj_data_->qfrc_applied[joint_state.mj_vel_adr] = joint_state.clamp_effort_cmd();
     }
   }
 }
@@ -111,8 +111,6 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
       }
     };
 
-    // TODO: get min, max value
-
     // state interfaces
     for (const auto& state_if : joint.state_interfaces)
     {
@@ -133,6 +131,32 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
       }
     }
 
+    auto get_min_value = [this](const hardware_interface::InterfaceInfo & interface_info)
+    {
+      if (!interface_info.min.empty())
+      {
+        double value = std::stod(interface_info.min);
+        return value;
+      }
+      else
+      {
+        return std::numeric_limits<double>::min();
+      }
+    };
+
+    auto get_max_value = [this](const hardware_interface::InterfaceInfo & interface_info)
+    {
+      if (!interface_info.max.empty())
+      {
+        double value = std::stod(interface_info.max);
+        return value;
+      }
+      else
+      {
+        return std::numeric_limits<double>::max();
+      }
+    };
+
     // command interfaces
     for (const auto& command_if : joint.command_interfaces)
     {
@@ -141,18 +165,24 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
         command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &joint_states_.back().position_command);
         joint_states_.back().is_position_control_enabled = true;
         joint_states_.back().position_command = joint_states_.back().position;
+        joint_states_.back().position_range.push_back(get_min_value(command_if));
+        joint_states_.back().position_range.push_back(get_max_value(command_if));
       }
       else if (command_if.name == hardware_interface::HW_IF_VELOCITY)
       {
         command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &joint_states_.back().velocity_command);
         joint_states_.back().is_velocity_control_enabled = true;
         joint_states_.back().velocity_command = joint_states_.back().velocity;
+        joint_states_.back().velocity_range.push_back(get_min_value(command_if));
+        joint_states_.back().velocity_range.push_back(get_max_value(command_if));
       }
       else if (command_if.name == hardware_interface::HW_IF_EFFORT)
       {
         command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &joint_states_.back().effort_command);
         joint_states_.back().is_effort_control_enabled = true;
         joint_states_.back().effort_command = joint_states_.back().effort;
+        joint_states_.back().effort_range.push_back(get_min_value(command_if));
+        joint_states_.back().effort_range.push_back(get_max_value(command_if));
       }
     }
   }
