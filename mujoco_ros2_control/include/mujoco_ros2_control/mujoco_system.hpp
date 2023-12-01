@@ -37,19 +37,6 @@ public:
     int mj_joint_type;
     int mj_pos_adr;
     int mj_vel_adr;
-
-    double clamp_position_cmd()
-    {
-      return std::min(std::max(position_command, position_range.at(0)), position_range.at(1));
-    }
-    double clamp_velocity_cmd()
-    {
-      return std::min(std::max(velocity_command, velocity_range.at(0)), velocity_range.at(1));
-    }
-    double clamp_effort_cmd()
-    {
-      return std::min(std::max(effort_command, effort_range.at(0)), effort_range.at(1));
-    }
   };
 
   template <typename T>

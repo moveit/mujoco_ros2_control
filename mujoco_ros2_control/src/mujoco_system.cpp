@@ -1,4 +1,5 @@
 #include "mujoco_ros2_control/mujoco_system.hpp"
+#include "rcppmath/clamp.hpp"
 
 namespace mujoco_ros2_control
 {
@@ -48,17 +49,39 @@ hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, c
   {
     if (joint_state.is_position_control_enabled)
     {
-      mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.clamp_position_cmd();
+      double min_pos = std::max(joint_state.position + joint_state.velocity_range.at(0)*period.seconds(), joint_state.position_range.at(0));
+      double max_pos = std::min(joint_state.position + joint_state.velocity_range.at(1)*period.seconds(), joint_state.position_range.at(1));
+      mj_data_->qpos[joint_state.mj_pos_adr] = rcppmath::clamp(joint_state.position_command, min_pos, max_pos);
     }
 
     if (joint_state.is_velocity_control_enabled)
     {
-      mj_data_->qvel[joint_state.mj_vel_adr] = joint_state.clamp_velocity_cmd();
+      double min_vel = joint_state.velocity_range.at(0);
+      double max_vel = joint_state.velocity_range.at(1);
+      if (joint_state.position <= joint_state.position_range.at(0))
+      {
+        min_vel = 0.0;
+      }
+      else if (joint_state.position >= joint_state.position_range.at(1))
+      {
+        max_vel = 0.0;
+      }
+      mj_data_->qvel[joint_state.mj_vel_adr] = rcppmath::clamp(joint_state.velocity_command, min_vel, max_vel);
     }
 
     if (joint_state.is_effort_control_enabled)
     {
-      mj_data_->qfrc_applied[joint_state.mj_vel_adr] = joint_state.clamp_effort_cmd();
+      double min_eff = joint_state.effort_range.at(0);
+      double max_eff = joint_state.effort_range.at(1);
+      if (joint_state.position <= joint_state.position_range.at(0) || joint_state.velocity <= joint_state.velocity_range.at(0))
+      {
+        min_eff = 0.0;
+      }
+      else if (joint_state.position >= joint_state.position_range.at(1) || joint_state.velocity >= joint_state.velocity_range.at(1))
+      {
+        max_eff = 0.0;
+      }
+      mj_data_->qfrc_applied[joint_state.mj_vel_adr] = rcppmath::clamp(joint_state.effort_command, min_eff, max_eff);
     }
   }
 }
@@ -110,6 +133,8 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
         return 0.0;
       }
     };
+
+    // TODO: get joint limit from urdf
 
     // state interfaces
     for (const auto& state_if : joint.state_interfaces)
