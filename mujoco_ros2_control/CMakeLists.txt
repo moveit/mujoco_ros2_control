@@ -17,6 +17,7 @@ find_package(rclcpp REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(controller_manager REQUIRED)
+find_package(urdf REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 set(THIS_PACKAGE_DEPENDS
@@ -25,6 +26,7 @@ set(THIS_PACKAGE_DEPENDS
   hardware_interface
   pluginlib
   controller_manager
+  urdf
 )
 
 find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)

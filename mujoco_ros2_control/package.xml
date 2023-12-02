@@ -1,28 +1,29 @@
 <?xml version="1.0"?>
 <?xml-model
-   href="http://download.ros.org/schema/package_format3.xsd"
-   schematypens="http://www.w3.org/2001/XMLSchema"?>
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
- <name>mujoco_ros2_control</name>
- <version>0.1.0</version>
- <description>mujoco_ros2_control</description>
+  <name>mujoco_ros2_control</name>
+  <version>0.1.0</version>
+  <description>mujoco_ros2_control</description>
 
- <maintainer email="sangteak601@gmail.com">Sangtaek Lee</maintainer>
+  <maintainer email="sangteak601@gmail.com">Sangtaek Lee</maintainer>
 
- <license>MIT</license>
+  <license>MIT</license>
 
- <author>Sangtaek Lee</author>
+  <author>Sangtaek Lee</author>
 
- <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
- <depend>rclcpp</depend>
- <depend>hardware_interface</depend>
- <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>urdf</depend>
 
- <test_depend>ament_lint_auto</test_depend>
- <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
- <export>
-   <build_type>ament_cmake</build_type>
- </export>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

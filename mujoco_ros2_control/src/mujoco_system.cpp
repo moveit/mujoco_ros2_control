@@ -1,5 +1,4 @@
 #include "mujoco_ros2_control/mujoco_system.hpp"
-#include "rcppmath/clamp.hpp"
 
 namespace mujoco_ros2_control
 {
@@ -49,58 +48,82 @@ hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, c
   {
     if (joint_state.is_position_control_enabled)
     {
-      double min_pos = std::max(joint_state.position + joint_state.velocity_range.at(0)*period.seconds(), joint_state.position_range.at(0));
-      double max_pos = std::min(joint_state.position + joint_state.velocity_range.at(1)*period.seconds(), joint_state.position_range.at(1));
-      mj_data_->qpos[joint_state.mj_pos_adr] = rcppmath::clamp(joint_state.position_command, min_pos, max_pos);
+      double min_pos, max_pos;
+      min_pos = joint_state.joint_limits.has_position_limits ? joint_state.joint_limits.min_position : -1*std::numeric_limits<double>::max();
+      min_pos = joint_state.joint_limits.has_velocity_limits ?
+        std::max(joint_state.position - joint_state.joint_limits.max_velocity*period.seconds(), min_pos) : min_pos;
+      min_pos = std::max(min_pos, joint_state.min_position_command);
+
+      max_pos = joint_state.joint_limits.has_position_limits ? joint_state.joint_limits.max_position : std::numeric_limits<double>::max();
+      max_pos = joint_state.joint_limits.has_velocity_limits ?
+        std::min(joint_state.position + joint_state.joint_limits.max_velocity*period.seconds(), max_pos) : max_pos;
+      max_pos = std::min(max_pos, joint_state.max_position_command);
+
+      mj_data_->qpos[joint_state.mj_pos_adr] = clamp(joint_state.position_command, min_pos, max_pos);
     }
 
     if (joint_state.is_velocity_control_enabled)
     {
-      double min_vel = joint_state.velocity_range.at(0);
-      double max_vel = joint_state.velocity_range.at(1);
-      if (joint_state.position <= joint_state.position_range.at(0))
+      double min_vel, max_vel;
+      if (joint_state.position <= joint_state.joint_limits.min_position)
       {
         min_vel = 0.0;
       }
-      else if (joint_state.position >= joint_state.position_range.at(1))
+      else if (joint_state.position >= joint_state.joint_limits.max_position)
       {
         max_vel = 0.0;
       }
-      mj_data_->qvel[joint_state.mj_vel_adr] = rcppmath::clamp(joint_state.velocity_command, min_vel, max_vel);
+      else
+      {
+        // TODO: add acceleration limits
+        min_vel = joint_state.joint_limits.has_velocity_limits ? -1*joint_state.joint_limits.max_velocity : -1*std::numeric_limits<double>::max();
+        min_vel = std::max(min_vel, joint_state.min_velocity_command);
+
+        max_vel = joint_state.joint_limits.has_velocity_limits ? joint_state.joint_limits.max_velocity : std::numeric_limits<double>::max();
+        max_vel = std::min(max_vel, joint_state.max_velocity_command);
+      }
+      mj_data_->qvel[joint_state.mj_vel_adr] = clamp(joint_state.velocity_command, min_vel, max_vel);
     }
 
     if (joint_state.is_effort_control_enabled)
     {
-      double min_eff = joint_state.effort_range.at(0);
-      double max_eff = joint_state.effort_range.at(1);
-      if (joint_state.position <= joint_state.position_range.at(0) || joint_state.velocity <= joint_state.velocity_range.at(0))
+      double min_eff, max_eff;
+      if (joint_state.position <= joint_state.joint_limits.min_position || joint_state.velocity <= -1*joint_state.joint_limits.max_velocity)
       {
         min_eff = 0.0;
       }
-      else if (joint_state.position >= joint_state.position_range.at(1) || joint_state.velocity >= joint_state.velocity_range.at(1))
+      else if (joint_state.position >= joint_state.joint_limits.max_position || joint_state.velocity >= joint_state.joint_limits.max_velocity)
       {
         max_eff = 0.0;
       }
-      mj_data_->qfrc_applied[joint_state.mj_vel_adr] = rcppmath::clamp(joint_state.effort_command, min_eff, max_eff);
+      else
+      {
+        min_eff = joint_state.joint_limits.has_effort_limits ? -1*joint_state.joint_limits.max_effort : -1*std::numeric_limits<double>::max();
+        min_eff = std::max(min_eff, joint_state.min_effort_command);
+
+        max_eff = joint_state.joint_limits.has_effort_limits ? joint_state.joint_limits.max_effort : std::numeric_limits<double>::max();
+        max_eff = std::min(max_eff, joint_state.max_effort_command);
+      }
+      mj_data_->qfrc_applied[joint_state.mj_vel_adr] = clamp(joint_state.effort_command, min_eff, max_eff);
     }
   }
 }
 
 bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model, mjData *mujoco_data,
-  const hardware_interface::HardwareInfo & hardware_info)
+  const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info)
 {
   node_ = node;
   mj_model_ = mujoco_model;
   mj_data_ = mujoco_data;
 
-  register_joints(hardware_info);
-  register_sensors(hardware_info);
+  register_joints(urdf_model, hardware_info);
+  register_sensors(urdf_model,hardware_info);
 
   // TODO: set initial pose
   return true;
 }
 
-void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hardware_info)
+void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info)
 {
   // TODO: mimic joint
   for (const auto& joint : hardware_info.joints)
@@ -120,6 +143,10 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
     joint_state.mj_vel_adr = mj_model_->jnt_dofadr[joint_id];
 
     joint_states_.push_back(joint_state);
+    JointState& last_joint_state = joint_states_.back();
+
+    // get joint limit from urdf
+    get_joint_limits(urdf_model.getJoint(last_joint_state.name), last_joint_state.joint_limits);
 
     auto get_initial_value = [this](const hardware_interface::InterfaceInfo & interface_info)
     {
@@ -134,25 +161,23 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
       }
     };
 
-    // TODO: get joint limit from urdf
-
     // state interfaces
     for (const auto& state_if : joint.state_interfaces)
     {
       if (state_if.name == hardware_interface::HW_IF_POSITION)
       {
-        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &joint_states_.back().position);
-        joint_states_.back().position = get_initial_value(state_if);
+        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &last_joint_state.position);
+        last_joint_state.position = get_initial_value(state_if);
       }
       else if (state_if.name == hardware_interface::HW_IF_VELOCITY)
       {
-        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &joint_states_.back().velocity);
-        joint_states_.back().velocity = get_initial_value(state_if);
+        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &last_joint_state.velocity);
+        last_joint_state.velocity = get_initial_value(state_if);
       }
       else if (state_if.name == hardware_interface::HW_IF_EFFORT)
       {
-        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &joint_states_.back().effort);
-        joint_states_.back().effort = get_initial_value(state_if);
+        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &last_joint_state.effort);
+        last_joint_state.effort = get_initial_value(state_if);
       }
     }
 
@@ -165,7 +190,7 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
       }
       else
       {
-        return std::numeric_limits<double>::min();
+        return -1*std::numeric_limits<double>::max();
       }
     };
 
@@ -183,42 +208,54 @@ void MujocoSystem::register_joints(const hardware_interface::HardwareInfo & hard
     };
 
     // command interfaces
+    // overwrite joint limit with min/max value
     for (const auto& command_if : joint.command_interfaces)
     {
       if (command_if.name == hardware_interface::HW_IF_POSITION)
       {
-        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &joint_states_.back().position_command);
-        joint_states_.back().is_position_control_enabled = true;
-        joint_states_.back().position_command = joint_states_.back().position;
-        joint_states_.back().position_range.push_back(get_min_value(command_if));
-        joint_states_.back().position_range.push_back(get_max_value(command_if));
+        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &last_joint_state.position_command);
+        last_joint_state.is_position_control_enabled = true;
+        last_joint_state.position_command = last_joint_state.position;
+        last_joint_state.min_position_command = get_min_value(command_if);
+        last_joint_state.max_position_command = get_max_value(command_if);
       }
       else if (command_if.name == hardware_interface::HW_IF_VELOCITY)
       {
-        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &joint_states_.back().velocity_command);
-        joint_states_.back().is_velocity_control_enabled = true;
-        joint_states_.back().velocity_command = joint_states_.back().velocity;
-        joint_states_.back().velocity_range.push_back(get_min_value(command_if));
-        joint_states_.back().velocity_range.push_back(get_max_value(command_if));
+        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &last_joint_state.velocity_command);
+        last_joint_state.is_velocity_control_enabled = true;
+        last_joint_state.velocity_command = last_joint_state.velocity;
+        last_joint_state.min_velocity_command = get_min_value(command_if);
+        last_joint_state.max_velocity_command = get_max_value(command_if);
       }
       else if (command_if.name == hardware_interface::HW_IF_EFFORT)
       {
-        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &joint_states_.back().effort_command);
-        joint_states_.back().is_effort_control_enabled = true;
-        joint_states_.back().effort_command = joint_states_.back().effort;
-        joint_states_.back().effort_range.push_back(get_min_value(command_if));
-        joint_states_.back().effort_range.push_back(get_max_value(command_if));
+        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &last_joint_state.effort_command);
+        last_joint_state.is_effort_control_enabled = true;
+        last_joint_state.effort_command = last_joint_state.effort;
+        last_joint_state.min_effort_command = get_min_value(command_if);
+        last_joint_state.max_effort_command = get_max_value(command_if);
       }
     }
   }
 }
 
-void MujocoSystem::register_sensors(const hardware_interface::HardwareInfo & hardware_info)
+void MujocoSystem::register_sensors(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info)
 {
   for (auto& joint : hardware_info.sensors)
   {
     // TODO
   }
+}
+
+void MujocoSystem::get_joint_limits(urdf::JointConstSharedPtr urdf_joint, joint_limits::JointLimits& joint_limits)
+{
+  urdf_joint->limits;
+  joint_limits.min_position = urdf_joint->limits->lower;
+  joint_limits.max_position = urdf_joint->limits->upper;
+
+  joint_limits.max_velocity = urdf_joint->limits->velocity;
+
+  joint_limits.max_effort = urdf_joint->limits->effort;
 }
 } // namespace mujoco_ros2_control
 

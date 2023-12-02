@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include "mujoco_ros2_control/mujoco_system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
+#include "joint_limits/joint_limits.hpp"
 
 namespace mujoco_ros2_control
 {
@@ -17,7 +18,7 @@ public:
   hardware_interface::return_type write(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
   bool init_sim(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData *mujoco_data,
-    const hardware_interface::HardwareInfo & hardware_info) override;
+    const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info) override;
 
   struct JointState
   {
@@ -28,9 +29,13 @@ public:
     double position_command;
     double velocity_command;
     double effort_command;
-    std::vector<double> position_range;
-    std::vector<double> velocity_range;
-    std::vector<double> effort_range;
+    double min_position_command;
+    double max_position_command;
+    double min_velocity_command;
+    double max_velocity_command;
+    double min_effort_command;
+    double max_effort_command;
+    joint_limits::JointLimits joint_limits;
     bool is_position_control_enabled = false;
     bool is_velocity_control_enabled = false;
     bool is_effort_control_enabled = false;
@@ -63,8 +68,13 @@ public:
   };
 
 private:
-  void register_joints(const hardware_interface::HardwareInfo & hardware_info);
-  void register_sensors(const hardware_interface::HardwareInfo & hardware_info);
+  void register_joints(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info);
+  void register_sensors(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info);
+  void get_joint_limits(urdf::JointConstSharedPtr urdf_joint, joint_limits::JointLimits& joint_limits);
+  double clamp(double v, double lo, double hi)
+  {
+    return (v < lo) ? lo : (hi < v) ? hi : v;
+  }
 
   std::vector<hardware_interface::StateInterface> state_interfaces_;
   std::vector<hardware_interface::CommandInterface> command_interfaces_;

@@ -68,7 +68,9 @@ void MujocoRos2Control::init()
       continue;
     }
 
-    if (!mujoco_system->init_sim(node_, mj_model_, mj_data_, hardware))
+    urdf::Model urdf_model;
+    urdf_model.initString(urdf_string);
+    if (!mujoco_system->init_sim(node_, mj_model_, mj_data_, urdf_model, hardware))
     {
       RCLCPP_FATAL(logger_, "Could not initialize robot simulation interface");
       return;
