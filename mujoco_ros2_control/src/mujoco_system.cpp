@@ -131,10 +131,13 @@ bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model
 void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info)
 {
   // TODO: mimic joint
-  for (const auto& joint : hardware_info.joints)
+  joint_states_.resize(hardware_info.joints.size());
+
+  for (size_t joint_index = 0; joint_index < hardware_info.joints.size(); joint_index++)
   {
-    int joint_id = mj_name2id(mj_model_, mjtObj::mjOBJ_JOINT, joint.name.c_str());
-    if (joint_id == -1)
+    auto joint = hardware_info.joints.at(joint_index);
+    int mujoco_joint_id = mj_name2id(mj_model_, mjtObj::mjOBJ_JOINT, joint.name.c_str());
+    if (mujoco_joint_id == -1)
     {
       RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to find joint in mujoco model, joint name: " << joint.name);
       continue;
@@ -143,12 +146,12 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
     // save information in joint_states_ variable
     JointState joint_state;
     joint_state.name = joint.name;
-    joint_state.mj_joint_type = mj_model_->jnt_type[joint_id];
-    joint_state.mj_pos_adr = mj_model_->jnt_qposadr[joint_id];
-    joint_state.mj_vel_adr = mj_model_->jnt_dofadr[joint_id];
+    joint_state.mj_joint_type = mj_model_->jnt_type[mujoco_joint_id];
+    joint_state.mj_pos_adr = mj_model_->jnt_qposadr[mujoco_joint_id];
+    joint_state.mj_vel_adr = mj_model_->jnt_dofadr[mujoco_joint_id];
 
-    joint_states_.push_back(joint_state);
-    JointState& last_joint_state = joint_states_.back();
+    joint_states_.at(joint_index) = joint_state;
+    JointState& last_joint_state = joint_states_.at(joint_index);
 
     // get joint limit from urdf
     get_joint_limits(urdf_model.getJoint(last_joint_state.name), last_joint_state.joint_limits);
