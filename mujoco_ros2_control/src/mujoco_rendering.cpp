@@ -43,6 +43,8 @@ void MujocoRendering::init(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model
   mjv_defaultScene(&mjv_scn_);
   mjr_defaultContext(&mjr_con_);
 
+  mjv_cam_.distance = 10.;
+
   // create scene and context
   mjv_makeScene(mj_model_, &mjv_scn_, 2000);
   mjr_makeContext(mj_model_, &mjr_con_, mjFONTSCALE_150);

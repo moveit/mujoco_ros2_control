@@ -15,6 +15,7 @@ int main(int argc, const char** argv) {
   rclcpp::init(argc, argv);
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("mujoco_ros2_control", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
 
+  RCLCPP_INFO_STREAM(node->get_logger(), "Initializing mujoco_ros2_control node...");
   auto model_path = node->get_parameter("mujoco_model_path").as_string();
 
   // load and compile model
@@ -28,16 +29,19 @@ int main(int argc, const char** argv) {
     mju_error("Load model error: %s", error);
   }
 
+  RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco model has been successfully loaded !");
   // make data
   mujoco_data = mj_makeData(mujoco_model);
 
   // initialize mujoco control
   auto control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
   control.init();
+  RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
 
   // initialize mujoco redering
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
   rendering->init(node, mujoco_model, mujoco_data);
+  RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
   // run main loop, target real-time simulation and 60 fps rendering
   while (rclcpp::ok() && !rendering->is_close_flag_raised()) {

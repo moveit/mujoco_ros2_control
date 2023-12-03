@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "pluginlib/class_loader.hpp"
 #include "controller_manager/controller_manager.hpp"
+#include "rosgraph_msgs/msg/clock.hpp"
 
 #include "mujoco/mujoco.h"
 
@@ -35,6 +36,7 @@ private:
   rclcpp::Duration control_period_;
 
   rclcpp::Time last_update_sim_time_ros_;
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
 };
 }  // namespace mujoco_ros2_control
 

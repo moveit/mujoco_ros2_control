@@ -22,6 +22,7 @@ MujocoRos2Control::~MujocoRos2Control()
 
 void MujocoRos2Control::init()
 {
+  clock_publisher_ = node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
   // Read urdf from ros parameter server then
   // setup actuators and mechanism control node.
   std::string urdf_string;
@@ -145,6 +146,9 @@ void MujocoRos2Control::update()
 void MujocoRos2Control::publish_sim_time(rclcpp::Time sim_time)
 {
   // TODO
+  rosgraph_msgs::msg::Clock sim_time_msg;
+  sim_time_msg.clock = sim_time;
+  clock_publisher_->publish(sim_time_msg);
 }
 
 } // namespace mujoco_ros2_control

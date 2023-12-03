@@ -64,7 +64,13 @@ hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, c
 
     if (joint_state.is_velocity_control_enabled)
     {
+      // TODO: add acceleration limits
       double min_vel, max_vel;
+      min_vel = joint_state.joint_limits.has_velocity_limits ? -1*joint_state.joint_limits.max_velocity : -1*std::numeric_limits<double>::max();
+      min_vel = std::max(min_vel, joint_state.min_velocity_command);
+
+      max_vel = joint_state.joint_limits.has_velocity_limits ? joint_state.joint_limits.max_velocity : std::numeric_limits<double>::max();
+      max_vel = std::min(max_vel, joint_state.max_velocity_command);
       if (joint_state.position <= joint_state.joint_limits.min_position)
       {
         min_vel = 0.0;
@@ -73,36 +79,35 @@ hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, c
       {
         max_vel = 0.0;
       }
-      else
-      {
-        // TODO: add acceleration limits
-        min_vel = joint_state.joint_limits.has_velocity_limits ? -1*joint_state.joint_limits.max_velocity : -1*std::numeric_limits<double>::max();
-        min_vel = std::max(min_vel, joint_state.min_velocity_command);
 
-        max_vel = joint_state.joint_limits.has_velocity_limits ? joint_state.joint_limits.max_velocity : std::numeric_limits<double>::max();
-        max_vel = std::min(max_vel, joint_state.max_velocity_command);
-      }
       mj_data_->qvel[joint_state.mj_vel_adr] = clamp(joint_state.velocity_command, min_vel, max_vel);
     }
 
     if (joint_state.is_effort_control_enabled)
     {
       double min_eff, max_eff;
-      if (joint_state.position <= joint_state.joint_limits.min_position || joint_state.velocity <= -1*joint_state.joint_limits.max_velocity)
+      min_eff = joint_state.joint_limits.has_effort_limits ? -1*joint_state.joint_limits.max_effort : -1*std::numeric_limits<double>::max();
+      min_eff = std::max(min_eff, joint_state.min_effort_command);
+
+      max_eff = joint_state.joint_limits.has_effort_limits ? joint_state.joint_limits.max_effort : std::numeric_limits<double>::max();
+      max_eff = std::min(max_eff, joint_state.max_effort_command);
+      if (joint_state.position <= joint_state.joint_limits.min_position)
+      {
+        min_eff = 0.0;
+        mj_data_->qvel[joint_state.mj_vel_adr] = clamp(joint_state.velocity, 0.0, std::numeric_limits<double>::max());
+      }
+      else if (joint_state.position >= joint_state.joint_limits.max_position)
+      {
+        max_eff = 0.0;
+        mj_data_->qvel[joint_state.mj_vel_adr] = clamp(joint_state.velocity, -1*std::numeric_limits<double>::max(), 0.0);
+      }
+      else if (joint_state.velocity <= -1*joint_state.joint_limits.max_velocity)
       {
         min_eff = 0.0;
       }
-      else if (joint_state.position >= joint_state.joint_limits.max_position || joint_state.velocity >= joint_state.joint_limits.max_velocity)
+      else if (joint_state.velocity >= joint_state.joint_limits.max_velocity)
       {
         max_eff = 0.0;
-      }
-      else
-      {
-        min_eff = joint_state.joint_limits.has_effort_limits ? -1*joint_state.joint_limits.max_effort : -1*std::numeric_limits<double>::max();
-        min_eff = std::max(min_eff, joint_state.min_effort_command);
-
-        max_eff = joint_state.joint_limits.has_effort_limits ? joint_state.joint_limits.max_effort : std::numeric_limits<double>::max();
-        max_eff = std::min(max_eff, joint_state.max_effort_command);
       }
       mj_data_->qfrc_applied[joint_state.mj_vel_adr] = clamp(joint_state.effort_command, min_eff, max_eff);
     }
@@ -249,13 +254,13 @@ void MujocoSystem::register_sensors(const urdf::Model& urdf_model, const hardwar
 
 void MujocoSystem::get_joint_limits(urdf::JointConstSharedPtr urdf_joint, joint_limits::JointLimits& joint_limits)
 {
-  urdf_joint->limits;
-  joint_limits.min_position = urdf_joint->limits->lower;
-  joint_limits.max_position = urdf_joint->limits->upper;
-
-  joint_limits.max_velocity = urdf_joint->limits->velocity;
-
-  joint_limits.max_effort = urdf_joint->limits->effort;
+  if (urdf_joint->limits)
+  {
+    joint_limits.min_position = urdf_joint->limits->lower;
+    joint_limits.max_position = urdf_joint->limits->upper;
+    joint_limits.max_velocity = urdf_joint->limits->velocity;
+    joint_limits.max_effort = urdf_joint->limits->effort;
+  }
 }
 } // namespace mujoco_ros2_control
 
