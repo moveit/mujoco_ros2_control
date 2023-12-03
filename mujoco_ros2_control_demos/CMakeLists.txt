@@ -46,11 +46,15 @@ ament_target_dependencies(example_effort ${THIS_PACKAGE_DEPENDS})
 add_executable(example_diff_drive examples/example_diff_drive.cpp)
 ament_target_dependencies(example_diff_drive ${THIS_PACKAGE_DEPENDS})
 
+add_executable(example_tricycle_drive examples/example_tricycle_drive.cpp)
+ament_target_dependencies(example_tricycle_drive ${THIS_PACKAGE_DEPENDS})
+
 install(TARGETS
     example_position
     example_velocity
     example_effort
     example_diff_drive
+    example_tricycle_drive
   DESTINATION lib/${PROJECT_NAME}
 )
 
