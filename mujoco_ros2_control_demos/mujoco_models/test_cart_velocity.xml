@@ -1,6 +1,6 @@
 <mujoco>
 	<option gravity="0 0 -9.81">
-		<flag contact="disable" />
+		<flag contact="enable" />
 	</option>
 	<worldbody>
         <light diffuse=".5 .5 .5" pos="0 0 5" dir="0 0 -1" />
@@ -16,4 +16,7 @@
             </body>
         </body>
 	</worldbody>
+    <contact>
+        <exclude body1="slideBar" body2="cart" />
+    </contact>
 </mujoco>

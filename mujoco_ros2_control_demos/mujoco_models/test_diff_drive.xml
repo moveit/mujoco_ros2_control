@@ -27,4 +27,8 @@
             </body>
         </body>
 	</worldbody>
+    <contact>
+        <exclude body1="chassis" body2="left_wheel" />
+        <exclude body1="chassis" body2="right_wheel" />
+    </contact>
 </mujoco>
