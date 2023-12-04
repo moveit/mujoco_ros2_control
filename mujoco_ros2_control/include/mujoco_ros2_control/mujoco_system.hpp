@@ -35,10 +35,13 @@ public:
     double max_velocity_command;
     double min_effort_command;
     double max_effort_command;
-    joint_limits::JointLimits joint_limits;
     bool is_position_control_enabled = false;
     bool is_velocity_control_enabled = false;
     bool is_effort_control_enabled = false;
+    joint_limits::JointLimits joint_limits;
+    bool is_mimic = false;
+    int mimicked_joint_index;
+    double mimic_multiplier;
     int mj_joint_type;
     int mj_pos_adr;
     int mj_vel_adr;

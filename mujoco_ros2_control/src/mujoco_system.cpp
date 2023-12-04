@@ -43,6 +43,16 @@ hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & time, co
 
 hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
+  // update mimic joint
+  for (auto& joint_state : joint_states_)
+  {
+    if (joint_state.is_mimic)
+    {
+      joint_state.position_command = joint_state.mimic_multiplier*joint_states_.at(joint_state.mimicked_joint_index).position_command;
+      joint_state.velocity_command = joint_state.mimic_multiplier*joint_states_.at(joint_state.mimicked_joint_index).velocity_command;
+      joint_state.effort_command = joint_state.mimic_multiplier*joint_states_.at(joint_state.mimicked_joint_index).effort_command;
+    }
+  }
   // Joint states
   for (auto& joint_state : joint_states_)
   {
@@ -130,7 +140,6 @@ bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model
 
 void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info)
 {
-  // TODO: mimic joint
   joint_states_.resize(hardware_info.joints.size());
 
   for (size_t joint_index = 0; joint_index < hardware_info.joints.size(); joint_index++)
@@ -155,6 +164,32 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
 
     // get joint limit from urdf
     get_joint_limits(urdf_model.getJoint(last_joint_state.name), last_joint_state.joint_limits);
+
+    // check if mimicked
+    if (joint.parameters.find("mimic") != joint.parameters.end()) {
+      const auto mimicked_joint = joint.parameters.at("mimic");
+      const auto mimicked_joint_it = std::find_if(
+        hardware_info.joints.begin(), hardware_info.joints.end(),
+        [&mimicked_joint](const hardware_interface::ComponentInfo & info) {
+          return info.name == mimicked_joint;
+        });
+      if (mimicked_joint_it == hardware_info.joints.end()) {
+        throw std::runtime_error(
+                std::string("Mimicked joint '") + mimicked_joint + "' not found");
+      }
+      last_joint_state.is_mimic = true;
+      last_joint_state.mimicked_joint_index = std::distance(
+        hardware_info.joints.begin(), mimicked_joint_it);
+
+      auto param_it = joint.parameters.find("multiplier");
+      if (param_it != joint.parameters.end()) {
+        last_joint_state.mimic_multiplier = std::stod(joint.parameters.at("multiplier"));
+      }
+      else
+      {
+        last_joint_state.mimic_multiplier = 1.0;
+      }
+    }
 
     auto get_initial_value = [this](const hardware_interface::InterfaceInfo & interface_info)
     {
