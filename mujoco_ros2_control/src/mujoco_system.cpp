@@ -131,6 +131,8 @@ bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model
   mj_model_ = mujoco_model;
   mj_data_ = mujoco_data;
 
+  logger_ = rclcpp::get_logger(node_->get_name() + std::string("mujoco_system"));
+
   register_joints(urdf_model, hardware_info);
   register_sensors(urdf_model,hardware_info);
 
@@ -148,7 +150,7 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
     int mujoco_joint_id = mj_name2id(mj_model_, mjtObj::mjOBJ_JOINT, joint.name.c_str());
     if (mujoco_joint_id == -1)
     {
-      RCLCPP_ERROR_STREAM(node_->get_logger(), "Failed to find joint in mujoco model, joint name: " << joint.name);
+      RCLCPP_ERROR_STREAM(logger_, "Failed to find joint in mujoco model, joint name: " << joint.name);
       continue;
     }
 
