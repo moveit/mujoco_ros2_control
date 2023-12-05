@@ -17,7 +17,9 @@ find_package(rclcpp REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(controller_manager REQUIRED)
+find_package(joint_limits REQUIRED)
 find_package(urdf REQUIRED)
+find_package(glfw3 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 set(THIS_PACKAGE_DEPENDS
@@ -26,7 +28,9 @@ set(THIS_PACKAGE_DEPENDS
   hardware_interface
   pluginlib
   controller_manager
+  joint_limits
   urdf
+  glfw3
 )
 
 find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
@@ -35,7 +39,7 @@ include_directories(include)
 
 add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp)
 ament_target_dependencies(mujoco_system_plugins ${THIS_PACKAGE_DEPENDS})
-target_link_libraries(mujoco_system_plugins ${MUJOCO_LIB} glfw)
+target_link_libraries(mujoco_system_plugins ${MUJOCO_LIB})
 target_include_directories(mujoco_system_plugins PUBLIC $ENV{MUJOCO_DIR}/include ${EIGEN3_INCLUDE_DIR})
 
 install(TARGETS
