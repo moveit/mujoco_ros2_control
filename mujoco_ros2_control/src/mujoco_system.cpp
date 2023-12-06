@@ -2,6 +2,10 @@
 
 namespace mujoco_ros2_control
 {
+MujocoSystem::MujocoSystem() : logger_(rclcpp::get_logger(""))
+{
+}
+
 std::vector<hardware_interface::StateInterface> MujocoSystem::export_state_interfaces()
 {
   return std::move(state_interfaces_);

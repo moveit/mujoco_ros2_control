@@ -18,7 +18,6 @@ public:
 
 protected:
   rclcpp::Node::SharedPtr node_;  // TODO: need node?
-  rclcpp::Logger logger_;
 };
 }  // namespace mujoco_ros2_control
 

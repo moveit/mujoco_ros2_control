@@ -11,6 +11,7 @@ namespace mujoco_ros2_control
 class MujocoSystem : public MujocoSystemInterface
 {
 public:
+  MujocoSystem();
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
   std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
@@ -88,6 +89,8 @@ private:
 
   mjModel* mj_model_;
   mjData* mj_data_;
+
+  rclcpp::Logger logger_;  // TODO: delete?
 };
 }  // namespace mujoco_ros2_control
 
