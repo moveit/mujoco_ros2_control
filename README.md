@@ -5,8 +5,29 @@
 
 This repository contains a ROS2 control package for Mujoco simulation, offering the `MujocoSystem` plugin to integrate `ros2_control` with Mujoco. Additionally, it includes a node responsible for initializing the plugin, Mujoco rendering, and the simulation.
 
-## Documentation
-See the [documentation](doc/index.rst) for details.
+## Installation Guide
+Follow these steps to install and run the project locally.
+
+### Prerequisites
+Make sure you have the following software installed if you are running on the local machine:
+
+- [ROS](https://docs.ros.org/)
+- [Mujoco](https://mujoco.org/)
+
+### Package Install
+Before build this package configure environment variable for mujoco directory.
+```
+export MUJOCO_DIR=/PATH/TO/MUJOCO/mujoco-3.0.0
+```
+You can now compile the package using the following commands.
+```
+cd mujoco_ros2_control
+source /opt/ros/${ROS_DISTRO}/setup.bash
+colcon build
+```
+
+## Usage
+See the [documentation](doc/index.rst) for usage.
 
 ## Future Work
 Here are several potential areas for future improvement:
