@@ -1,0 +1,34 @@
+<mujoco>
+    <compiler angle="radian" />
+	<option gravity="0 0 -9.81">
+		<flag contact="enable" />
+	</option>
+	<worldbody>
+        <light diffuse=".5 .5 .5" pos="0 0 5" dir="0 0 -1" />
+		<geom type="plane" size="20 20 0.1" rgba="1 1 1 1" />
+
+        <body name="chassis" pos="-0.151427 0 0.5" euler="0 0 0">
+            <joint type="free" />
+            <geom type="box" size="1.00571 0.5 0.284363" rgba="1 0.65 0 1" />
+            <inertial pos="0 0 0" mass="1.14395" diaginertia="0.126164 0.416519 0.481014" />
+            <body name="left_wheel" pos="0.70571 0.625029 -0.2" euler="-1.5707 0 0">
+                <joint name="left_wheel_joint" type="hinge" axis="0 0 1" pos="0 0 0" damping="0.2" />
+                <geom type="sphere" size="0.3" rgba="0 0 0 1" />
+                <inertial pos="0 0 0" mass="2" diaginertia="0.145833 0.145833 0.125" />
+            </body>
+            <body name="right_wheel" pos="0.70571 -0.625029 -0.2" euler="-1.5707 0 0">
+                <joint name="right_wheel_joint" type="hinge" axis="0 0 1" pos="0 0 0" damping="0.2" />
+                <geom type="sphere" size="0.3" rgba="0 0 0 1" />
+                <inertial pos="0 0 0" mass="2" diaginertia="0.145833 0.145833 0.125" />
+            </body>
+            <body name="caster" pos="-0.805711 0 -0.3" euler="0 0 0">
+                <geom type="sphere" size="0.2" rgba="0 0 0 1" />
+                <inertial pos="0 0 0" mass="0.005" diaginertia="0.1 0.1 0.1" />
+            </body>
+        </body>
+	</worldbody>
+    <contact>
+        <exclude body1="chassis" body2="left_wheel" />
+        <exclude body1="chassis" body2="right_wheel" />
+    </contact>
+</mujoco>

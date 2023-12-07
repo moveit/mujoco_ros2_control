@@ -1,0 +1,28 @@
+<mujoco>
+    <compiler angle="radian" />
+	<option gravity="0 0 -9.81">
+		<flag contact="enable" />
+	</option>
+	<worldbody>
+        <light diffuse=".5 .5 .5" pos="0 0 5" dir="0 0 -1" />
+		<geom type="plane" size="20 20 0.1" rgba="1 1 1 1" />
+
+        <body name="base" pos="0 0 0.5" euler="0 0 0">
+            <geom type="box" size="0.25 0.5 0.5" rgba="0.4 0.18 0.57 1" />
+            <inertial pos="0 0 0" mass="50" diaginertia="1.0 1.0 1.0" />
+            <body name="finger_right" pos="0 0.05 1" euler="0 0 0">
+                <joint name="right_finger_joint" type="slide" axis="0 1 0" pos="0 0 0"  />
+                <geom type="box" size="0.2 0.05 0.5" rgba="0.2 0.2 0.2 1" />
+                <inertial pos="0 0 0" mass="5" diaginertia="1.0 1.0 1.0" />
+            </body>
+            <body name="finger_left" pos="0 -0.05 1" euler="0 0 3.1415926535">
+                <joint name="left_finger_joint" type="slide" axis="0 1 0" pos="0 0 0"  />
+                <geom type="box" size="0.2 0.05 0.5" rgba="0.2 0.2 0.2 1" />
+                <inertial pos="0 0 0" mass="5" diaginertia="1.0 1.0 1.0" />
+            </body>
+        </body>
+	</worldbody>
+    <contact>
+        <exclude body1="finger_right" body2="finger_left" />
+    </contact>
+</mujoco>
