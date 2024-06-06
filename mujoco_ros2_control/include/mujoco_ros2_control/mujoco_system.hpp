@@ -5,9 +5,16 @@
 #include "mujoco_ros2_control/mujoco_system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "joint_limits/joint_limits.hpp"
+#include "control_toolbox/pid.hpp"
 
 namespace mujoco_ros2_control
 {
+constexpr char PARAM_KP[] {"_kp"};
+constexpr char PARAM_KI[] {"_ki"};
+constexpr char PARAM_KD[] {"_kd"};
+constexpr char PARAM_I_MAX[] {"_i_max"};
+constexpr char PARAM_I_MIN[] {"_i_min"};
+
 class MujocoSystem : public MujocoSystemInterface
 {
 public:
@@ -36,11 +43,14 @@ public:
     double max_velocity_command;
     double min_effort_command;
     double max_effort_command;
-    bool is_position_control_enabled = false;
-    bool is_velocity_control_enabled = false;
-    bool is_effort_control_enabled = false;
+    control_toolbox::Pid position_pid;
+    control_toolbox::Pid velocity_pid;
+    bool is_position_control_enabled {false};
+    bool is_velocity_control_enabled {false};
+    bool is_effort_control_enabled {false};
+    bool is_pid_enabled {false};
     joint_limits::JointLimits joint_limits;
-    bool is_mimic = false;
+    bool is_mimic {false};
     int mimicked_joint_index;
     double mimic_multiplier;
     int mj_joint_type;
@@ -75,6 +85,7 @@ private:
   void register_joints(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info);
   void register_sensors(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info);
   void get_joint_limits(urdf::JointConstSharedPtr urdf_joint, joint_limits::JointLimits& joint_limits);
+  control_toolbox::Pid get_pid_gains(const hardware_interface::ComponentInfo& joint_info, std::string command_interface);
   double clamp(double v, double lo, double hi)
   {
     return (v < lo) ? lo : (hi < v) ? hi : v;
