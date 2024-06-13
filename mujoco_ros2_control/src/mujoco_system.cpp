@@ -393,7 +393,7 @@ control_toolbox::Pid MujocoSystem::get_pid_gains(const hardware_interface::Compo
   }
   else
   {
-    i_min = std::numeric_limits<double>::min();
+    i_min = std::numeric_limits<double>::lowest();
   }
 
   return control_toolbox::Pid(kp, ki, kd, i_max, i_min, enable_anti_windup);
