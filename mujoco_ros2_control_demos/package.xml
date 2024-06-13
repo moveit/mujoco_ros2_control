@@ -19,7 +19,7 @@
  <depend>rclcpp_action</depend>
  <depend>std_msgs</depend>
  <depend>control_msgs</depend>
- <depend>joint-trajectory-controller</depend>
+ <depend>joint_trajectory_controller</depend>
  <depend>velocity_controllers</depend>
 
  <test_depend>ament_lint_auto</test_depend>
