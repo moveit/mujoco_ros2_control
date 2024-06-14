@@ -21,6 +21,7 @@
  <depend>control_msgs</depend>
  <depend>joint_trajectory_controller</depend>
  <depend>velocity_controllers</depend>
+ <depend>force_torque_sensor_broadcaster</depend>
 
  <test_depend>ament_lint_auto</test_depend>
  <test_depend>ament_lint_common</test_depend>

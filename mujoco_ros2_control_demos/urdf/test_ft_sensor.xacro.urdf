@@ -1,0 +1,90 @@
+<?xml version="1.0" ?>
+<robot name="cart">
+  <link name="world"/>
+
+  <link name="motor">
+    <visual>
+      <geometry>
+        <cylinder radius="0.05" length="0.6"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="green">
+        <color rgba="0 .8 0 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="10"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <link name="fts_sensor">
+    <visual>
+      <geometry>
+        <cylinder radius="0.5" length="0.2"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="blue">
+        <color rgba="0 0 .8 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <link name="weight">
+    <visual>
+      <geometry>
+        <box size="0.5 0.5 0.2"/>
+      </geometry>
+      <origin xyz="0 0 0"/>
+      <material name="red">
+        <color rgba=".8 0 0 1"/>
+      </material>
+    </visual>
+    <inertial>
+      <mass value="10"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="world_to_motor" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0.3"/>
+    <parent link="world"/>
+    <child link="motor"/>
+  </joint>
+
+  <joint name="sensor_to_motor" type="revolute">
+    <axis xyz="0 0 1"/>
+    <origin xyz="0.0 0.0 0.4"/>
+    <parent link="motor"/>
+    <child link="fts_sensor"/>
+    <limit effort="1000.0" lower="-3.14" upper="3.14" velocity="3.14"/>
+  </joint>
+
+  <joint name="world_to_weight" type="floating">
+    <origin xyz="0.0 0.0 10.0"/>
+    <parent link="world"/>
+    <child link="weight"/>
+    <limit effort="1000.0" lower="-2.5" upper="2.5" velocity="30"/>
+    <dynamics damping="1.0" friction="0.0"/>
+  </joint>
+
+  <ros2_control name="MujocoSystem" type="system">
+    <hardware>
+      <plugin>mujoco_ros2_control/MujocoSystem</plugin>
+    </hardware>
+
+    <sensor name="fts_sensor">
+        <state_interface name="force.x"/>
+        <state_interface name="force.y"/>
+        <state_interface name="force.z"/>
+        <state_interface name="torque.x"/>
+        <state_interface name="torque.y"/>
+        <state_interface name="torque.z"/>
+        <param name="frame_id">fts_sensor</param>
+      </sensor>
+  </ros2_control>
+</robot>
