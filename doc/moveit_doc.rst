@@ -58,7 +58,7 @@ TODO
 How to Setup mujoco_ros2_control
 --------------------------------
 
-.. note:: Please refer to [this](https://github.com/sangteak601/mujoco_ros2_control/blob/moveit_doc/doc/index.rst#usage) for the details.
+.. note:: Please refer to `this <https://github.com/sangteak601/mujoco_ros2_control/blob/moveit_doc/doc/index.rst#usage>`_ for the details.
 
 Set ros2_control plugin in the URDF
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -74,7 +74,7 @@ You can specify ros2_plugin in the URDF file as follows:
   </ros2_control>
 
 You can also set parameters for the plugin such as minimum joint position, maximum joint position and so on.
-To find examples of parameters, please see [urdf examples](https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/urdf).
+To find examples of parameters, please see `urdf examples <https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/urdf>`_.
 
 Create MJCF(MuJoCo xml format)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -87,7 +87,7 @@ For force torque sensor, you need to map the sensor to a force sensor and a torq
 The name of each sensor should be sensor_name + _force and sensor_name + _torque.
 For example, if you have a force torque sensor called my_sensor, you need to create my_sensor_force and my_sensor_torque in MJCF.
 
-Check [mujoco_models](https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/mujoco_models) for examples.
+Check `mujoco_models <https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/mujoco_models>_ for examples.
 
 Specify the location of Mujoco models and the controller configuration file
 
