@@ -87,7 +87,7 @@ For force torque sensor, you need to map the sensor to a force sensor and a torq
 The name of each sensor should be sensor_name + _force and sensor_name + _torque.
 For example, if you have a force torque sensor called my_sensor, you need to create my_sensor_force and my_sensor_torque in MJCF.
 
-Check `mujoco_models <https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/mujoco_models>_ for examples.
+Check `mujoco_models <https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/mujoco_models>`_ for examples.
 
 Specify the location of Mujoco models and the controller configuration file
 
@@ -116,4 +116,4 @@ You also need to pass controller configuration since mujoco_ros2_control is repl
 Running the MoveIt Interactive Marker Demo with MuJoCo
 ------------------------------------------------------
 
-.. note:: Please refer to [this](https://github.com/sangteak601/mujoco_ros2_control_examples/tree/main/mujoco_panda) for running the demo.
+.. note:: Please refer to `this <https://github.com/sangteak601/mujoco_ros2_control_examples/tree/main/mujoco_panda>`_ for running the demo.
