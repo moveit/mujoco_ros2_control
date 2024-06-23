@@ -89,13 +89,11 @@ For example, if you have a force torque sensor called my_sensor, you need to cre
 
 Check `mujoco_models <https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/mujoco_models>`_ for examples.
 
-Specify the location of Mujoco models and the controller configuration file
-
 Specify the path to MJCF and controller config
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You need to pass the path to MJCF as `mujoco_model_path` parameter to the node.
-You also need to pass controller configuration since mujoco_ros2_control is replacing ros2_control node.
+You need to pass the path to MJCF as ``mujoco_model_path`` parameter to the node.
+You also need to pass controller configuration since ``mujoco_ros2_control`` is replacing ``ros2_control`` node.
 
 .. code-block:: Python
 
