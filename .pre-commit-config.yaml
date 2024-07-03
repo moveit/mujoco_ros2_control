@@ -1,0 +1,55 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+        exclude_types: [rst, markdown]
+
+  - repo: local
+    hooks:
+      - id: ament_clang_format
+        name: amend_clang_format
+        entry: ament_clang_format
+        language: system
+        files: \.(h\+\+|h|hh|hxx|hpp|cuh|c|cc|cpp|cu|c\+\+|cxx|tpp|txx)$
+        args: ["--config=.clang-format", "--reformat"]
+        exclude: mujoco_ros2_control_demos/examples
+
+  - repo: local
+    hooks:
+      - id: ament_cppcheck
+        name: ament_cppcheck
+        entry: env AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1 ament_cppcheck
+        language: system
+        files: \.(h\+\+|h|hh|hxx|hpp|cuh|c|cc|cpp|cu|c\+\+|cxx|tpp|txx)$
+
+  - repo: local
+    hooks:
+      - id: ament_cpplint
+        name: ament_cpplint
+        entry: ament_cpplint
+        language: system
+        files: \.(h\+\+|h|hh|hxx|hpp|cuh|c|cc|cpp|cu|c\+\+|cxx|tpp|txx)$
+        args: ["--linelength=100", "--filter=-whitespace/newline"]
+
+  - repo: local
+    hooks:
+      - id: ament_lint_cmake
+        name: ament_lint_cmake
+        entry: ament_lint_cmake
+        language: system
+        files: CMakeLists\.txt$
+
+  - repo: local
+    hooks:
+      - id: ament_copyright
+        name: ament_copyright
+        entry: ament_copyright
+        language: system
+        exclude: .*/conf\.py$

@@ -1,0 +1,12 @@
+Language: Cpp
+BasedOnStyle: Google
+
+ColumnLimit: 100
+AccessModifierOffset: -2
+AlignAfterOpenBracket: AlwaysBreak
+BreakBeforeBraces: Allman
+ContinuationIndentWidth: 2
+DerivePointerAlignment: false
+PointerAlignment: Right
+ReflowComments: true
+IncludeBlocks: Preserve
