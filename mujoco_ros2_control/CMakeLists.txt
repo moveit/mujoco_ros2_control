@@ -34,6 +34,7 @@ set(THIS_PACKAGE_DEPENDS
   glfw3
   control_toolbox
 )
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
 
