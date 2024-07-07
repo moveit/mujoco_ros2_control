@@ -6,11 +6,11 @@
         <light diffuse=".5 .5 .5" pos="0 0 5" dir="0 0 -1" />
 		<geom type="plane" size="20 20 0.1" rgba="1 1 1 1" />
 
-        <body name="slideBar" pos="0 0 1" euler="0 0 0">
-            <geom type="box" size="15 0.025 0.025" rgba="0 .8 0 1" />
+        <body name="slideBar" pos="0 0 2.5" euler="0 0 0">
+            <geom type="box" size="0.025 0.025 2.5" rgba="0 .8 0 1" />
             <inertial pos="0 0 0" mass="100" diaginertia="1.0 1.0 1.0" />
             <body name="cart" pos="0 0 0" euler="0 0 0">
-                <joint name="slider_to_cart" type="slide" axis="1 0 0" pos="0 0 0" />
+                <joint name="slider_to_cart" type="slide" axis="0 0 1" pos="0 0 0" range="-2.5 2.5" />
                 <geom type="box" size="0.25 0.25 0.1" rgba="0 0 .8 1" />
                 <inertial pos="0 0 0" mass="1" diaginertia="1.0 1.0 1.0" />
             </body>

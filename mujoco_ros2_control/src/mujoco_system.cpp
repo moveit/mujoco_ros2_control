@@ -47,7 +47,6 @@ hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & time, co
 
 hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
-  // TODO: find out better way to apply joint limit
   // update mimic joint
   for (auto& joint_state : joint_states_)
   {
@@ -63,86 +62,39 @@ hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, c
   {
     if (joint_state.is_position_control_enabled)
     {
-      double min_pos, max_pos;
-      min_pos = joint_state.joint_limits.has_position_limits ? joint_state.joint_limits.min_position : -1*std::numeric_limits<double>::max();
-      min_pos = std::max(min_pos, joint_state.min_position_command);
-
-      max_pos = joint_state.joint_limits.has_position_limits ? joint_state.joint_limits.max_position : std::numeric_limits<double>::max();
-      max_pos = std::min(max_pos, joint_state.max_position_command);
-
       if (joint_state.is_pid_enabled)
       {
-        double error = clamp(joint_state.position_command, min_pos, max_pos) - mj_data_->qpos[joint_state.mj_pos_adr];
+        double error = joint_state.position_command - mj_data_->qpos[joint_state.mj_pos_adr];
         mj_data_->qfrc_applied[joint_state.mj_vel_adr] = joint_state.position_pid.computeCommand(error, period.nanoseconds());
       }
       else
       {
-        double min_pos_by_vel_limit = joint_state.joint_limits.has_velocity_limits ?
-          std::max(joint_state.position - joint_state.joint_limits.max_velocity*period.seconds(), min_pos) : min_pos;
-        min_pos = std::max(min_pos, min_pos_by_vel_limit);
-
-        double max_pos_by_vel_limit = joint_state.joint_limits.has_velocity_limits ?
-          std::min(joint_state.position + joint_state.joint_limits.max_velocity*period.seconds(), max_pos) : max_pos;
-        max_pos = std::min(max_pos, max_pos_by_vel_limit);
-        mj_data_->qpos[joint_state.mj_pos_adr] = clamp(joint_state.position_command, min_pos, max_pos);
+        mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position_command;
       }
     }
 
     if (joint_state.is_velocity_control_enabled)
     {
-      double min_vel, max_vel;
-      min_vel = joint_state.joint_limits.has_velocity_limits ? -1*joint_state.joint_limits.max_velocity : -1*std::numeric_limits<double>::max();
-      min_vel = std::max(min_vel, joint_state.min_velocity_command);
-
-      max_vel = joint_state.joint_limits.has_velocity_limits ? joint_state.joint_limits.max_velocity : std::numeric_limits<double>::max();
-      max_vel = std::min(max_vel, joint_state.max_velocity_command);
-      if (joint_state.position <= joint_state.joint_limits.min_position)
-      {
-        min_vel = 0.0;
-      }
-      else if (joint_state.position >= joint_state.joint_limits.max_position)
-      {
-        max_vel = 0.0;
-      }
-
       if (joint_state.is_pid_enabled)
       {
-        double error = clamp(joint_state.velocity_command, min_vel, max_vel) - mj_data_->qvel[joint_state.mj_vel_adr];
+        double error = joint_state.velocity_command - mj_data_->qvel[joint_state.mj_vel_adr];
         mj_data_->qfrc_applied[joint_state.mj_vel_adr] = joint_state.velocity_pid.computeCommand(error, period.nanoseconds());;
       }
       else
       {
-        // TODO: add acceleration limits
-        mj_data_->qvel[joint_state.mj_vel_adr] = clamp(joint_state.velocity_command, min_vel, max_vel);
+        mj_data_->qvel[joint_state.mj_vel_adr] = joint_state.velocity_command;
       }
     }
 
     if (joint_state.is_effort_control_enabled)
     {
       double min_eff, max_eff;
-      min_eff = joint_state.joint_limits.has_effort_limits ? -1*joint_state.joint_limits.max_effort : -1*std::numeric_limits<double>::max();
+      min_eff = joint_state.joint_limits.has_effort_limits ? -1*joint_state.joint_limits.max_effort : std::numeric_limits<double>::lowest();
       min_eff = std::max(min_eff, joint_state.min_effort_command);
 
       max_eff = joint_state.joint_limits.has_effort_limits ? joint_state.joint_limits.max_effort : std::numeric_limits<double>::max();
       max_eff = std::min(max_eff, joint_state.max_effort_command);
-      if (joint_state.position <= joint_state.joint_limits.min_position)
-      {
-        min_eff = 0.0;
-        mj_data_->qvel[joint_state.mj_vel_adr] = clamp(joint_state.velocity, 0.0, std::numeric_limits<double>::max());
-      }
-      else if (joint_state.position >= joint_state.joint_limits.max_position)
-      {
-        max_eff = 0.0;
-        mj_data_->qvel[joint_state.mj_vel_adr] = clamp(joint_state.velocity, -1*std::numeric_limits<double>::max(), 0.0);
-      }
-      else if (joint_state.velocity <= -1*joint_state.joint_limits.max_velocity)
-      {
-        min_eff = 0.0;
-      }
-      else if (joint_state.velocity >= joint_state.joint_limits.max_velocity)
-      {
-        max_eff = 0.0;
-      }
+
       mj_data_->qfrc_applied[joint_state.mj_vel_adr] = clamp(joint_state.effort_command, min_eff, max_eff);
     }
   }

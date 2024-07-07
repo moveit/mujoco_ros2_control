@@ -37,7 +37,7 @@ Convert URDF model to xml
 --------------------------
 You need to convert the URDF model to a MJCF XML file.
 Make sure to use the same name for the link and joint, which are mapped to the body and joint in Mujoco.
-You don't need to specify <limit>; it will be taken care of in the plugin.
+You need to specify <limit> which is mapped to ``range`` in MJCF. For now, there is no way to specify velocity or acceleration limit.
 
 For force torque sensor, you need to map the sensor to a force sensor and a torque sensor in MJCF since there is no combined force torque sensor in MuJoCo.
 The name of each sensor should be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
