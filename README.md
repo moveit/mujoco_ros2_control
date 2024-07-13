@@ -17,7 +17,7 @@ Make sure you have the following software installed if you are running on the lo
 ### Package Install
 Before build this package configure environment variable for mujoco directory.
 ```
-export MUJOCO_DIR=/PATH/TO/MUJOCO/mujoco-3.0.0
+export MUJOCO_DIR=/PATH/TO/MUJOCO/mujoco-3.x.x
 ```
 You can now compile the package using the following commands.
 ```
@@ -32,10 +32,8 @@ See the [documentation](doc/index.rst) for usage.
 ## Future Work
 Here are several potential areas for future improvement:
 
-1. **Sensors:** Implement F/T sensors, IMU sensors, and range sensors.
+1. **Sensors:** Implement IMU sensors, and range sensors.
 
-2. **Realistic Control:** Add velocity-based and effort-based position control and effort-based velocity control to make simulation more realistic.
-
-3. **Loading Model From URDF:** Implement direct loading of models from URDF, eliminating the need to convert URDF files to XML.
+2. **Loading Model From URDF:** Implement direct loading of models from URDF, eliminating the need to convert URDF files to XML.
 
 Feel free to suggest ideas for new features or improvements.

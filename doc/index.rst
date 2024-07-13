@@ -35,15 +35,19 @@ Use ``mujoco_ros2_control/MujocoSystem`` for plugin
 
 Convert URDF model to xml
 --------------------------
-You need to convert the URDF model to a Mujoco-style XML file.
+You need to convert the URDF model to a MJCF XML file.
 Make sure to use the same name for the link and joint, which are mapped to the body and joint in Mujoco.
-You don't need to specify <limit>; it will be taken care of in the plugin.
+You need to specify <limit> which is mapped to ``range`` in MJCF. For now, there is no way to specify velocity or acceleration limit.
+
+For force torque sensor, you need to map the sensor to a force sensor and a torque sensor in MJCF since there is no combined force torque sensor in MuJoCo.
+The name of each sensor should be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
+For example, if you have a force torque sensor called ``my_sensor``, you need to create ``my_sensor_force`` and ``my_sensor_torque`` in MJCF.
 
 Check ``mujoco_ros2_control_demos/mujoco_models`` for examples.
 
 Specify the location of Mujoco models and the controller configuration file
 ----------------------------------------------------------------------------
-ou need to pass parameters for paths as shown in the following example.
+You need to pass parameters for paths as shown in the following example.
 
 .. code-block:: python3
 

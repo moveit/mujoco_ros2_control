@@ -18,7 +18,7 @@ def generate_launch_description():
 
     xacro_file = os.path.join(mujoco_ros2_control_demos_path,
                               'urdf',
-                              'test_cart_velocity.xacro.urdf')
+                              'test_vertical_cart_velocity_pid.xacro.urdf')
     doc = xacro.parse(open(xacro_file))
     xacro.process_doc(doc)
     robot_description = {'robot_description': doc.toxml()}
@@ -32,7 +32,7 @@ def generate_launch_description():
         parameters=[
             robot_description,
             controller_config_file,
-            {'mujoco_model_path':os.path.join(mujoco_ros2_control_demos_path, 'mujoco_models', 'test_cart.xml')}
+            {'mujoco_model_path':os.path.join(mujoco_ros2_control_demos_path, 'mujoco_models', 'test_vertical_cart.xml')}
         ]
     )
 

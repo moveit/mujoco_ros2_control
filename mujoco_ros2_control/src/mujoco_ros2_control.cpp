@@ -7,7 +7,7 @@
 namespace mujoco_ros2_control
 {
 MujocoRos2Control::MujocoRos2Control(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data)
-  : node_(node), mj_model_(mujoco_model), mj_data_(mujoco_data), logger_(rclcpp::get_logger(node_->get_name() + std::string("mujoco_ros2_control"))),
+  : node_(node), mj_model_(mujoco_model), mj_data_(mujoco_data), logger_(rclcpp::get_logger(node_->get_name() + std::string(".mujoco_ros2_control"))),
     control_period_(rclcpp::Duration(1, 0)), last_update_sim_time_ros_(0, 0, RCL_ROS_TIME)
 {
 }
@@ -53,6 +53,15 @@ void MujocoRos2Control::init()
 
   std::unique_ptr<hardware_interface::ResourceManager> resource_manager =
     std::make_unique<hardware_interface::ResourceManager>();
+
+  try
+  {
+    resource_manager->load_urdf(urdf_string, false, false);
+  }
+  catch (...)
+  {
+    RCLCPP_ERROR(logger_, "Error while initializing URDF!");
+  }
 
   for (const auto& hardware : control_hardware_info)
   {

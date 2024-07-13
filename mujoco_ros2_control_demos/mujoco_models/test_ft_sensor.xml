@@ -1,0 +1,33 @@
+<mujoco>
+	<option gravity="0 0 -9.81">
+		<flag contact="enable" />
+	</option>
+	<worldbody>
+        <light diffuse=".5 .5 .5" pos="0 0 5" dir="0 0 -1" />
+		<geom type="plane" size="20 20 0.1" rgba="1 1 1 1" />
+
+        <body name="motor" pos="0 0 0.3" euler="0 0 0">
+            <geom type="cylinder" size="0.25 0.3" rgba="0 .8 0 1" />
+            <inertial pos="0 0 0" mass="10" diaginertia="1.0 1.0 1.0" />
+            <body name="fts_sensor" pos="0 0 0.4" euler="0 0 0">
+                <joint name="sensor_to_motor" type="hinge" axis="0 0 1" pos="0 0 0" />
+                <geom type="cylinder" size="0.25 0.1" rgba="0 0 .8 1" />
+                <inertial pos="0 0 0" mass="1" diaginertia="1.0 1.0 1.0" />
+                <site name="fts_sensor_site" pos="0 0 0"/>
+            </body>
+        </body>
+        <body name="weight" pos="0 0 10" euler="0 0 0">
+                <freejoint name="world_to_weight"/>
+                <geom type="box" size="0.25 0.25 0.1" rgba=".8 0 0 1" />
+                <inertial pos="0 0 0" mass="10" diaginertia="1.0 1.0 1.0" />
+            </body>
+	</worldbody>
+    <sensor>
+        <force name="fts_sensor_force" site="fts_sensor_site"/>
+        <torque name="fts_sensor_torque" site="fts_sensor_site"/>
+    </sensor>
+    <!-- <contact>
+        <exclude body1="slideBar" body2="cart" />
+        <exclude body1="slideBar" body2="weight" />
+    </contact> -->
+</mujoco>

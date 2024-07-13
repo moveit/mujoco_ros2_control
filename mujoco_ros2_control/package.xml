@@ -21,6 +21,7 @@
   <depend>joint_limits</depend>
   <depend>pluginlib</depend>
   <depend>urdf</depend>
+  <depend>control_toolbox</depend>
   <exec_depend>ros2controlcli</exec_depend>
   <exec_depend>joint_state_broadcaster</exec_depend>
   <exec_depend>effort_controllers</exec_depend>

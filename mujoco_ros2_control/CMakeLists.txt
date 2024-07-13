@@ -21,6 +21,7 @@ find_package(joint_limits REQUIRED)
 find_package(urdf REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(control_toolbox REQUIRED)
 
 set(THIS_PACKAGE_DEPENDS
   ament_cmake
@@ -31,7 +32,9 @@ set(THIS_PACKAGE_DEPENDS
   joint_limits
   urdf
   glfw3
+  control_toolbox
 )
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
 

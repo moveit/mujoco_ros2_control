@@ -1,0 +1,11 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    force_torque_broadcaster:
+      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+
+force_torque_broadcaster:
+  ros__parameters:
+    frame_id: fts_sensor
+    sensor_name: fts_sensor
