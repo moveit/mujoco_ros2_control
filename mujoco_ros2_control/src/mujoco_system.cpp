@@ -35,13 +35,13 @@ hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & time, co
   // FT Sensor data
   for (auto& data : ft_sensor_data_)
   {
-    data.force.data.x() = mj_data_->sensordata[data.force.mj_sensor_index];
-    data.force.data.y() = mj_data_->sensordata[data.force.mj_sensor_index + 1];
-    data.force.data.z() = mj_data_->sensordata[data.force.mj_sensor_index + 2];
+    data.force.data.x() = -mj_data_->sensordata[data.force.mj_sensor_index];
+    data.force.data.y() = -mj_data_->sensordata[data.force.mj_sensor_index + 1];
+    data.force.data.z() = -mj_data_->sensordata[data.force.mj_sensor_index + 2];
 
-    data.torque.data.x() = mj_data_->sensordata[data.torque.mj_sensor_index];
-    data.torque.data.y() = mj_data_->sensordata[data.torque.mj_sensor_index + 1];
-    data.torque.data.z() = mj_data_->sensordata[data.torque.mj_sensor_index + 2];
+    data.torque.data.x() = -mj_data_->sensordata[data.torque.mj_sensor_index];
+    data.torque.data.y() = -mj_data_->sensordata[data.torque.mj_sensor_index + 1];
+    data.torque.data.z() = -mj_data_->sensordata[data.torque.mj_sensor_index + 2];
   }
 }
 
@@ -113,6 +113,7 @@ bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model
   register_sensors(urdf_model,hardware_info);
 
   // TODO: set initial pose
+  set_initial_pose();
   return true;
 }
 
@@ -328,6 +329,16 @@ void MujocoSystem::register_sensors(const urdf::Model& urdf_model, const hardwar
         state_interfaces_.emplace_back(sensor.name, state_if.name, &last_sensor_data.torque.data.z());
       }
     }
+  }
+}
+
+void MujocoSystem::set_initial_pose()
+{
+  // Assuming 
+  // Joint states
+  for (auto& joint_state : joint_states_)
+  {
+    mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position_command;
   }
 }
 
