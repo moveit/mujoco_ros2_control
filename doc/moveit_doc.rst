@@ -4,7 +4,7 @@ How To Setup mujoco_ros2_control
 Introduction
 ------------
 
-This document provides guidance on how to setup and use `mujoco_ros2_control` package.
+This document provides guidance on how to setup and use ``mujoco_ros2_control`` package.
 This page will demonstrate the supported MuJoCo simulation features with a robot manipulator.
 However, this package is not specifically designed for manipulation and can be used for any types of robots.
 
@@ -25,7 +25,7 @@ Running in the container
 ^^^^^^^^^^^^^^^^^^^^^^^^
 If you want to run an application in docker container, you need following dependencies installed on the machine.
 
-1. docker
+1. `Docker <https://docs.docker.com/engine/install/>`_
 
 
 Installation
@@ -34,20 +34,27 @@ Installation
 Running on the local machine
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1. Clone the repository.
+1. Create a workspace
+.. code-block:: bash
+
+    mkdir -p ~/mujoco_ros_ws/src
+
+2. Clone the repository.
   .. code-block:: bash
 
+    cd ~/mujoco_ros_ws/src
     git clone https://github.com/sangteak601/mujoco_ros2_control.git
 
-2. Set environment variable
+3. Set environment variable
   .. code-block:: bash
 
     export MUJOCO_DIR=/PATH/TO/MUJOCO/mujoco-3.x.x
 
-3. Build the package
+4. Build the package
   .. code-block:: bash
 
     cd mujoco_ros2_control
+    sudo apt update && rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
     source /opt/ros/${ROS_DISTRO}/setup.bash
     colcon build
 
