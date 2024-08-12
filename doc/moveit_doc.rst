@@ -53,9 +53,9 @@ Running on the local machine
 4. Build the package
   .. code-block:: bash
 
-    cd mujoco_ros2_control
     sudo apt update && rosdep install -r --from-paths . --ignore-src --rosdistro $ROS_DISTRO -y
     source /opt/ros/${ROS_DISTRO}/setup.bash
+    cd ~/mujoco_ros_ws
     colcon build
 
 Running in the container
@@ -71,7 +71,7 @@ How to Setup mujoco_ros2_control
 Set ros2_control plugin in the URDF
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can configure the `ros2_control` hardware system plugin for MuJoCO in the URDF file as follows:
+You can configure the `ros2_control` hardware system plugin for MuJoCo in the URDF file as follows:
 
 .. code-block:: XML
 
@@ -81,14 +81,14 @@ You can configure the `ros2_control` hardware system plugin for MuJoCO in the UR
     </hardware>
   </ros2_control>
 
-You can also set parameters for the plugin such as minimum joint position, maximum joint position and so on.
+You can also set parameters for the plugin such as pid gains, min/max effort and so on.
 To find examples of parameters, please see `urdf examples <https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/urdf>`_.
 
 Create MJCF(MuJoCo xml format)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You need to convert the URDF model to a MJCF XML file.
-Make sure to use the **same name** for the link and joint, which are mapped to the body and joint in MuJoCo.
+Make sure to use the **same name** for the ``link`` and ``joint``, which are mapped to the ``body`` and ``joint`` in MuJoCo.
 You can specify position limits in ``<limit>`` in MJCF, and effort limits in URDF as shown in this
 `example <https://github.com/sangteak601/mujoco_ros2_control/blob/moveit_doc/mujoco_ros2_control_demos/urdf/test_cart_effort.xacro.urdf>`_
 Velocity limits will not be applied at all.
