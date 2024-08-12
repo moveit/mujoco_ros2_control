@@ -334,11 +334,9 @@ void MujocoSystem::register_sensors(const urdf::Model& urdf_model, const hardwar
 
 void MujocoSystem::set_initial_pose()
 {
-  // Assuming 
-  // Joint states
   for (auto& joint_state : joint_states_)
   {
-    mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position_command;
+    mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position;
   }
 }
 
