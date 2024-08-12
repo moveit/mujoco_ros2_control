@@ -237,6 +237,7 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
         command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &last_joint_state.position_command);
         last_joint_state.is_position_control_enabled = true;
         last_joint_state.position_command = last_joint_state.position;
+        // TODO: These are not used at all. Potentially can be removed.
         last_joint_state.min_position_command = get_min_value(command_if);
         last_joint_state.max_position_command = get_max_value(command_if);
       }
@@ -245,6 +246,7 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
         command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &last_joint_state.velocity_command);
         last_joint_state.is_velocity_control_enabled = true;
         last_joint_state.velocity_command = last_joint_state.velocity;
+        // TODO: These are not used at all. Potentially can be removed.
         last_joint_state.min_velocity_command = get_min_value(command_if);
         last_joint_state.max_velocity_command = get_max_value(command_if);
       }
