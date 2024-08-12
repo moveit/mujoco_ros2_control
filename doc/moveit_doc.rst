@@ -35,7 +35,7 @@ Running on the local machine
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. Create a workspace
-.. code-block:: bash
+  .. code-block:: bash
 
     mkdir -p ~/mujoco_ros_ws/src
 
