@@ -4,8 +4,9 @@ How To Setup mujoco_ros2_control
 Introduction
 ------------
 
-This documents provide guidence on how to setup and use mujoco_ros2_control package.
-This page will demonstrate package's features with a robot manipulator, but the package is not specifically designed for manipulation and can be used for any types of robots.
+This document provides guidance on how to setup and use `mujoco_ros2_control` package.
+This page will demonstrate the supported MuJoCo simulation features with a robot manipulator.
+However, this package is not specifically designed for manipulation and can be used for any types of robots.
 
 
 Prerequisites
@@ -16,9 +17,9 @@ Running on the local machine
 
 If you want to run an application on the local machine, you need following dependencies installed on the machine.
 
-1. MuJoCo
-2. ROS2 humble?
-3. MoveIt2
+1. `MuJoCo <https://github.com/google-deepmind/mujoco>`_
+2. `ROS 2 humble <https://docs.ros.org/en/humble/Installation.html>`_
+3. `MoveIt 2 <https://github.com/moveit/moveit2>`_
 
 Running in the container
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -63,7 +64,7 @@ How to Setup mujoco_ros2_control
 Set ros2_control plugin in the URDF
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can specify ros2_plugin in the URDF file as follows:
+You can configure the `ros2_control` hardware system plugin for MuJoCO in the URDF file as follows:
 
 .. code-block:: XML
 
@@ -80,12 +81,14 @@ Create MJCF(MuJoCo xml format)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You need to convert the URDF model to a MJCF XML file.
-Make sure to use the **same name** for the link and joint, which are mapped to the body and joint in Mujoco.
-You don't need to specify <limit> in MJCF because it will be taken care of in the plugin.
+Make sure to use the **same name** for the link and joint, which are mapped to the body and joint in MuJoCo.
+You can specify position limits in ``<limit>`` in MJCF, and effort limits in URDF as shown in this
+`example <https://github.com/sangteak601/mujoco_ros2_control/blob/moveit_doc/mujoco_ros2_control_demos/urdf/test_cart_effort.xacro.urdf>`_
+Velocity limits will not be applied at all.
 
-For force torque sensor, you need to map the sensor to a force sensor and a torque sensor in MJCF, since there is no combined force torque sensor in MuJoCo.
+Any force torque sensors need to be mapped to separate force and torque sensors in the MJCF, since there is no support for combined sensors in MuJoCo.
 The name of each sensor should be sensor_name + _force and sensor_name + _torque.
-For example, if you have a force torque sensor called my_sensor, you need to create my_sensor_force and my_sensor_torque in MJCF.
+For example, if you have a force torque sensor called ``my_sensor``, you need to create ``my_sensor_force`` and ``my_sensor_torque`` in MJCF.
 
 Check `mujoco_models <https://github.com/sangteak601/mujoco_ros2_control/tree/moveit_doc/mujoco_ros2_control_demos/mujoco_models>`_ for examples.
 
