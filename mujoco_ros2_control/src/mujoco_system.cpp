@@ -112,7 +112,6 @@ bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model
   register_joints(urdf_model, hardware_info);
   register_sensors(urdf_model,hardware_info);
 
-  // TODO: set initial pose
   set_initial_pose();
   return true;
 }
