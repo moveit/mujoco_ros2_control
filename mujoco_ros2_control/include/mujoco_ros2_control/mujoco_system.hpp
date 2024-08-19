@@ -84,6 +84,7 @@ public:
 private:
   void register_joints(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info);
   void register_sensors(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info);
+  void set_initial_pose();
   void get_joint_limits(urdf::JointConstSharedPtr urdf_joint, joint_limits::JointLimits& joint_limits);
   control_toolbox::Pid get_pid_gains(const hardware_interface::ComponentInfo& joint_info, std::string command_interface);
   double clamp(double v, double lo, double hi)
