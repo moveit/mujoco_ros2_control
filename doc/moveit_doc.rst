@@ -21,12 +21,6 @@ If you want to run an application on the local machine, you need following depen
 2. `ROS 2 humble <https://docs.ros.org/en/humble/Installation.html>`_
 3. `MoveIt 2 <https://github.com/moveit/moveit2>`_
 
-Running in the container
-^^^^^^^^^^^^^^^^^^^^^^^^
-If you want to run an application in docker container, you need following dependencies installed on the machine.
-
-1. `Docker <https://docs.docker.com/engine/install/>`_
-
 
 Installation
 ------------
@@ -58,10 +52,6 @@ Running on the local machine
     cd ~/mujoco_ros_ws
     colcon build
 
-Running in the container
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-TODO
 
 How to Setup mujoco_ros2_control
 --------------------------------
