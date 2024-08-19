@@ -26,8 +26,4 @@
         <force name="fts_sensor_force" site="fts_sensor_site"/>
         <torque name="fts_sensor_torque" site="fts_sensor_site"/>
     </sensor>
-    <!-- <contact>
-        <exclude body1="slideBar" body2="cart" />
-        <exclude body1="slideBar" body2="weight" />
-    </contact> -->
 </mujoco>

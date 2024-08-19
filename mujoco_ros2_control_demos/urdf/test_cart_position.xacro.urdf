@@ -53,10 +53,7 @@
       <plugin>mujoco_ros2_control/MujocoSystem</plugin>
     </hardware>
     <joint name="slider_to_cart">
-      <command_interface name="position">
-        <param name="min">-15</param>
-        <param name="max">15</param>
-      </command_interface>
+      <command_interface name="position" />
       <state_interface name="position">
         <param name="initial_value">1.0</param>
       </state_interface>
