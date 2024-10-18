@@ -36,7 +36,17 @@ set(THIS_PACKAGE_DEPENDS
 )
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
+find_package(mujoco QUIET)
+if(mujoco_FOUND)
+  message(STATUS "Mujoco build from source")
+  set(MUJOCO_LIB mujoco::mujoco)
+  set(MUJOCO_INCLUDE_DIR ${MUJOCO_INCLUDE_DIR})
+else (mujoco_FOUND)
+  message(STATUS "Mujoco build from binary")
+  find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
+  set(MUJOCO_INCLUDE_DIR $ENV{MUJOCO_DIR}/include)
+endif (mujoco_FOUND)
+
 
 include_directories(include)
 

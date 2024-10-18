@@ -2,7 +2,7 @@
 
 namespace mujoco_ros2_control
 {
-MujocoSystem::MujocoSystem() : logger_(rclcpp::get_logger(""))
+MujocoSystem::MujocoSystem() : logger_(rclcpp::get_logger("MujocoSystem"))
 {
 }
 
@@ -43,11 +43,13 @@ hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & time, co
     data.torque.data.y() = -mj_data_->sensordata[data.torque.mj_sensor_index + 1];
     data.torque.data.z() = -mj_data_->sensordata[data.torque.mj_sensor_index + 2];
   }
+  return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, const rclcpp::Duration & period)
 {
   // update mimic joint
+
   for (auto& joint_state : joint_states_)
   {
     if (joint_state.is_mimic)
@@ -98,6 +100,7 @@ hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, c
       mj_data_->qfrc_applied[joint_state.mj_vel_adr] = clamp(joint_state.effort_command, min_eff, max_eff);
     }
   }
+  return hardware_interface::return_type::OK;
 }
 
 bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model, mjData *mujoco_data,
