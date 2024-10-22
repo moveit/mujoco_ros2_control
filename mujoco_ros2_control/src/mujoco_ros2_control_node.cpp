@@ -11,11 +11,10 @@ mjData* mujoco_data = nullptr;
 
 // main function
 int main(int argc, const char** argv) {
-
   rclcpp::init(argc, argv);
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("mujoco_ros2_control_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
 
-  // get the ros arg
+  // get the ros arg, mainly for getting --param-file for cm
   rclcpp::NodeOptions cm_node_options = controller_manager::get_cm_node_options();
   std::vector<std::string> node_arguments = cm_node_options.arguments();
   for(int i = 1; i < argc; ++i)
@@ -24,9 +23,6 @@ int main(int argc, const char** argv) {
     node_arguments.emplace_back(argv[i]);
   }
   cm_node_options.arguments(node_arguments);
-  for(const auto & it:node_arguments)
-    std::cout<<it<<std::endl;
-
 
   RCLCPP_INFO_STREAM(node->get_logger(), "Initializing mujoco_ros2_control node...");
   auto model_path = node->get_parameter("mujoco_model_path").as_string();

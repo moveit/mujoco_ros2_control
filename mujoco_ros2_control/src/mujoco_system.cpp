@@ -29,7 +29,19 @@ hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & time, co
   // IMU Sensor data
   for (auto& data : imu_sensor_data_)
   {
-    // TODO
+    std::vector<SensorData<Eigen::Vector3d>*> ptr_vec{&data.angular_velocity,
+                                                       &data.linear_velocity,
+                                                       &data.linear_acceleration};
+    data.orientation.data.w() = mj_data_->sensordata[data.orientation.mj_sensor_index];
+    data.orientation.data.x() = mj_data_->sensordata[data.orientation.mj_sensor_index + 1];
+    data.orientation.data.y() = mj_data_->sensordata[data.orientation.mj_sensor_index + 2];
+    data.orientation.data.z() = mj_data_->sensordata[data.orientation.mj_sensor_index + 3];
+    for (int i = 0; i < 3; ++i)
+    {
+      ptr_vec[i]->data.x() = mj_data_->sensordata[ptr_vec[i]->mj_sensor_index];
+      ptr_vec[i]->data.y() = mj_data_->sensordata[ptr_vec[i]->mj_sensor_index + 1];
+      ptr_vec[i]->data.z() = mj_data_->sensordata[ptr_vec[i]->mj_sensor_index + 2];
+    }
   }
 
   // FT Sensor data
@@ -113,7 +125,7 @@ bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model
   logger_ = rclcpp::get_logger(node_->get_name() + std::string("mujoco_system"));
 
   register_joints(urdf_model, hardware_info);
-  register_sensors(urdf_model,hardware_info);
+  register_sensors(urdf_model, hardware_info);
 
   set_initial_pose();
   return true;
@@ -279,12 +291,65 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
 
 void MujocoSystem::register_sensors(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info)
 {
-  // TODO: for now, assuming all sensors are ft_sensor
-  ft_sensor_data_.resize(hardware_info.sensors.size());
-
-  for (size_t sensor_index = 0; sensor_index < hardware_info.sensors.size(); sensor_index++)
+  // count the number of different sensor
+  std::vector<int> ft_idx{}, imu_idx{};
+  for(size_t info_idx = 0; info_idx < hardware_info.sensors.size(); ++info_idx)
   {
-    auto sensor = hardware_info.sensors.at(sensor_index);
+    auto sensor_info = hardware_info.sensors[info_idx];
+    if(sensor_info.parameters.find("type") == sensor_info.parameters.end())
+    {
+      RCLCPP_WARN(logger_, "Sensor missing \"type\" tag in URDF, skipping ...");
+      continue;
+    }
+    const std::string type = sensor_info.parameters["type"];
+    if(type == "IMU") imu_idx.push_back(int(info_idx));
+    else if(type == "FTSensor") ft_idx.push_back(int(info_idx));
+  }
+  ft_sensor_data_.resize(ft_idx.size());
+  imu_sensor_data_.resize(imu_idx.size());
+
+  for(size_t sensor_idx = 0; sensor_idx < imu_idx.size(); ++sensor_idx)
+  {
+    auto sensor_info = hardware_info.sensors[imu_idx[sensor_idx]];
+    IMUSensorData& imu_data =  imu_sensor_data_[sensor_idx];
+    imu_data.name = sensor_info.name;
+    imu_data.angular_velocity.name = imu_data.name + "_Gyro";
+    imu_data.orientation.name = imu_data.name + "_Framequat";
+    imu_data.linear_velocity.name = imu_data.name + "_Velocimeter";
+    imu_data.linear_acceleration.name = imu_data.name + "_Accelerometer";
+
+    int angular_vel_id = mj_name2id(mj_model_, mjtObj::mjOBJ_SENSOR, imu_data.angular_velocity.name.c_str());
+    int orientation_id = mj_name2id(mj_model_, mjtObj::mjOBJ_SENSOR, imu_data.orientation.name.c_str());
+    int linear_acc_id = mj_name2id(mj_model_, mjtObj::mjOBJ_SENSOR, imu_data.linear_acceleration.name.c_str());
+    int linear_vel_id = mj_name2id(mj_model_, mjtObj::mjOBJ_SENSOR, imu_data.linear_velocity.name.c_str());
+    if (angular_vel_id == -1 || orientation_id == -1 || linear_acc_id == -1 || linear_vel_id == -1)
+    {
+      RCLCPP_ERROR_STREAM(logger_, "IMU sensor lack of sub-sensor, check the MJCF for IMU sensor: " << imu_data.name);
+      continue;
+    }
+    imu_data.angular_velocity.mj_sensor_index = mj_model_->sensor_adr[angular_vel_id];
+    imu_data.orientation.mj_sensor_index = mj_model_->sensor_adr[orientation_id];
+    imu_data.linear_velocity.mj_sensor_index = mj_model_->sensor_adr[linear_vel_id];
+    imu_data.linear_acceleration.mj_sensor_index = mj_model_->sensor_adr[linear_acc_id];
+
+    state_interfaces_.emplace_back(imu_data.name, "orientation.w", &imu_data.orientation.data.w());
+    state_interfaces_.emplace_back(imu_data.name, "orientation.x", &imu_data.orientation.data.x());
+    state_interfaces_.emplace_back(imu_data.name, "orientation.y", &imu_data.orientation.data.y());
+    state_interfaces_.emplace_back(imu_data.name, "orientation.z", &imu_data.orientation.data.z());
+    state_interfaces_.emplace_back(imu_data.name, "angular_velocity.x", &imu_data.angular_velocity.data.x());
+    state_interfaces_.emplace_back(imu_data.name, "angular_velocity.y", &imu_data.angular_velocity.data.y());
+    state_interfaces_.emplace_back(imu_data.name, "angular_velocity.z", &imu_data.angular_velocity.data.z());
+    state_interfaces_.emplace_back(imu_data.name, "linear_velocity.x", &imu_data.linear_velocity.data.x());
+    state_interfaces_.emplace_back(imu_data.name, "linear_velocity.y", &imu_data.linear_velocity.data.y());
+    state_interfaces_.emplace_back(imu_data.name, "linear_velocity.z", &imu_data.linear_velocity.data.z());
+    state_interfaces_.emplace_back(imu_data.name, "linear_acceleration.x", &imu_data.linear_acceleration.data.x());
+    state_interfaces_.emplace_back(imu_data.name, "linear_acceleration.y", &imu_data.linear_acceleration.data.y());
+    state_interfaces_.emplace_back(imu_data.name, "linear_acceleration.z", &imu_data.linear_acceleration.data.z());
+  }
+
+  for (size_t sensor_idx = 0; sensor_idx < ft_idx.size(); ++sensor_idx)
+  {
+    auto sensor = hardware_info.sensors.at(sensor_idx);
 
     FTSensorData sensor_data;
     sensor_data.name = sensor.name;
@@ -303,8 +368,8 @@ void MujocoSystem::register_sensors(const urdf::Model& urdf_model, const hardwar
     sensor_data.force.mj_sensor_index = mj_model_->sensor_adr[force_sensor_id];
     sensor_data.torque.mj_sensor_index = mj_model_->sensor_adr[torque_sensor_id];
 
-    ft_sensor_data_.at(sensor_index) = sensor_data;
-    auto& last_sensor_data = ft_sensor_data_.at(sensor_index);
+    ft_sensor_data_.at(sensor_idx) = sensor_data;
+    auto& last_sensor_data = ft_sensor_data_.at(sensor_idx);
 
     for (const auto& state_if : sensor.state_interfaces)
     {

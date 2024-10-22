@@ -1,5 +1,15 @@
 <?xml version="1.0"?>
 <robot name="diff_drive" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <material name="orange">
+    <color rgba="0.8 0.4 0.0 1.0"/>
+  </material>
+  <material name="black">
+    <color rgba="0.0 0.0 0.0 1.0"/>
+  </material>
+  <material name="white">
+    <color rgba="1.0 1.0 1.0 1.0"/>
+  </material>
+
   <!-- Base Link -->
   <link name="chassis">
     <collision>
@@ -146,5 +156,8 @@
       <state_interface name="position"/>
       <state_interface name="velocity"/>
     </joint>
+    <sensor name="ImuSensor">
+      <param name="type">IMU</param>
+    </sensor>
   </ros2_control>
 </robot>
