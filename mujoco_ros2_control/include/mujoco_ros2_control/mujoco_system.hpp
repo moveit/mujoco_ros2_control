@@ -79,6 +79,7 @@ public:
     SensorData<Eigen::Quaternion<double>> orientation;
     SensorData<Eigen::Vector3d> angular_velocity;
     SensorData<Eigen::Vector3d> linear_velocity;
+    SensorData<Eigen::Vector3d> linear_acceleration;
   };
 
 private:
@@ -102,7 +103,7 @@ private:
   mjModel* mj_model_;
   mjData* mj_data_;
 
-  rclcpp::Logger logger_;  // TODO: delete?
+  rclcpp::Logger logger_;
 };
 }  // namespace mujoco_ros2_control
 

@@ -12,17 +12,21 @@
 
 namespace mujoco_ros2_control
 {
+// declare in advance
+class MJResourceManager;
+
 class MujocoRos2Control
 {
 public:
-  MujocoRos2Control(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data);
+  MujocoRos2Control(rclcpp::Node::SharedPtr & node, rclcpp::NodeOptions cm_node_option, mjModel* mujoco_model, mjData* mujoco_data);
   ~MujocoRos2Control();
   void init();
   void update();
 
 private:
   void publish_sim_time(rclcpp::Time sim_time);
-  rclcpp::Node::SharedPtr node_;  // TODO: delete node
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::NodeOptions cm_node_option_;
   mjModel* mj_model_;
   mjData* mj_data_;
 
