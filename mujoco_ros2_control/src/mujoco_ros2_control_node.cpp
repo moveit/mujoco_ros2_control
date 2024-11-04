@@ -72,5 +72,5 @@ int main(int argc, const char** argv) {
   mj_deleteModel(mujoco_model);
   RCLCPP_INFO(node->get_logger(), "Mujoco Sim Stop ...");
 
-  return 1;
+  return 0;
 }

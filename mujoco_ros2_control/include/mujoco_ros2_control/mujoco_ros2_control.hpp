@@ -18,7 +18,7 @@ class MJResourceManager;
 class MujocoRos2Control
 {
 public:
-  MujocoRos2Control(rclcpp::Node::SharedPtr & node, rclcpp::NodeOptions cm_node_option, mjModel* mujoco_model, mjData* mujoco_data);
+  MujocoRos2Control(const rclcpp::Node::SharedPtr & node, const rclcpp::NodeOptions & cm_node_option, mjModel* mujoco_model, mjData* mujoco_data);
   ~MujocoRos2Control();
   void init();
   void update();
@@ -26,9 +26,9 @@ public:
 private:
   void publish_sim_time(rclcpp::Time sim_time);
   rclcpp::Node::SharedPtr node_;
-  rclcpp::NodeOptions cm_node_option_;
   mjModel* mj_model_;
   mjData* mj_data_;
+  rclcpp::NodeOptions cm_node_option_;
 
   rclcpp::Logger logger_;
   std::shared_ptr<pluginlib::ClassLoader<MujocoSystemInterface>> robot_hw_sim_loader_;
@@ -36,7 +36,7 @@ private:
   std::shared_ptr<controller_manager::ControllerManager> controller_manager_;
   rclcpp::executors::MultiThreadedExecutor::SharedPtr cm_executor_;
   std::thread cm_thread_;
-  bool stop_cm_thread_;
+  bool stop_cm_thread_ = false;
   rclcpp::Duration control_period_;
 
   rclcpp::Time last_update_sim_time_ros_;
