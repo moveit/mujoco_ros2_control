@@ -2,6 +2,11 @@
 
 namespace mujoco_ros2_control
 {
+MujocoRendering::~MujocoRendering()
+{
+  close();
+}
+
 MujocoRendering* MujocoRendering::instance_ = nullptr;
 
 MujocoRendering* MujocoRendering::get_instance()

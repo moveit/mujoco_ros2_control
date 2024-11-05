@@ -18,16 +18,18 @@ class MJResourceManager;
 class MujocoRos2Control
 {
 public:
-  MujocoRos2Control(const rclcpp::Node::SharedPtr & node, const rclcpp::NodeOptions & cm_node_option, mjModel* mujoco_model, mjData* mujoco_data);
+  MujocoRos2Control(const rclcpp::Node::SharedPtr & node, const rclcpp::NodeOptions & cm_node_option);
   ~MujocoRos2Control();
   void init();
   void update();
+  mjData* getMjData();
+  mjModel* getMjModel();
 
 private:
   void publish_sim_time(rclcpp::Time sim_time);
   rclcpp::Node::SharedPtr node_;
-  mjModel* mj_model_;
-  mjData* mj_data_;
+  mjModel* mj_model_ = nullptr;
+  mjData* mj_data_ = nullptr;
   rclcpp::NodeOptions cm_node_option_;
 
   rclcpp::Logger logger_;

@@ -8,16 +8,22 @@ namespace mujoco_ros2_control
 {
 class MJResourceManager : public hardware_interface::ResourceManager{
 public:
-  MJResourceManager(rclcpp::Node::SharedPtr& node, mjModel* mj_model, mjData* mj_data)
+  MJResourceManager(rclcpp::Node::SharedPtr& node, mjModel*& mj_model, mjData*& mj_data)
   : hardware_interface::ResourceManager(node->get_node_clock_interface(), node->get_node_logging_interface()),
         mj_system_loader_("mujoco_ros2_control", "mujoco_ros2_control::MujocoSystemInterface"),
-        logger_(node->get_logger().get_child("MJResourceManager"))
+        logger_(node->get_logger().get_child("MJResourceManager")), mj_model_(mj_model), mj_data_(mj_data)
   {
-    mj_model_ = mj_model;
-    mj_data_ = mj_data;
     node_ = node;
   }
+
   MJResourceManager(const MJResourceManager&) = delete;
+
+  ~MJResourceManager() override
+  {
+    // release resources when exit or failure
+    mj_deleteModel(mj_model_);
+    mj_deleteData(mj_data_);
+  }
 
   /// Called from ControllerManager when {robot_description} is initialized from callback.
   /**
@@ -31,6 +37,22 @@ public:
     components_are_loaded_and_initialized_ = true;
 
     const auto hardware_info = hardware_interface::parse_control_resources_from_urdf(urdf);
+
+    // generate mj_data_ and mj_model_ for SystemInterface
+    auto model_path = node_->get_parameter("mujoco_model_path").as_string();
+    // load and compile model
+    char error[1000] = "Could not load binary model";
+    if (std::strlen(model_path.c_str())>4 && !std::strcmp(model_path.c_str()+std::strlen(model_path.c_str())-4, ".mjb")) {
+      mj_model_ = mj_loadModel(model_path.c_str(), 0);
+    } else {
+      mj_model_ = mj_loadXML(model_path.c_str(), 0, error, 1000);
+    }
+    if (!mj_model_) {
+      mju_error("Load model error: %s", error);
+      return !components_are_loaded_and_initialized_;
+    }
+    RCLCPP_INFO_STREAM(logger_, "Mujoco model has been successfully loaded !");
+    mj_data_ = mj_makeData(mj_model_);
 
     for (const auto& individual_hardware_info : hardware_info)
     {
@@ -68,12 +90,12 @@ private:
   std::shared_ptr<rclcpp::Node> node_;
   pluginlib::ClassLoader<MujocoSystemInterface> mj_system_loader_;
   rclcpp::Logger logger_;
-  mjModel* mj_model_;
-  mjData* mj_data_;
+  mjModel*& mj_model_;
+  mjData*& mj_data_;
 };
 
-MujocoRos2Control::MujocoRos2Control(const rclcpp::Node::SharedPtr & node, const rclcpp::NodeOptions & cm_node_option, mjModel* mujoco_model, mjData* mujoco_data)
-  : node_(node), mj_model_(mujoco_model), mj_data_(mujoco_data), cm_node_option_(cm_node_option),
+MujocoRos2Control::MujocoRos2Control(const rclcpp::Node::SharedPtr & node, const rclcpp::NodeOptions & cm_node_option)
+  : node_(node), cm_node_option_(cm_node_option),
       logger_(rclcpp::get_logger(node_->get_name() + std::string(".mujoco_ros2_control"))),
       control_period_(rclcpp::Duration(1, 0)), last_update_sim_time_ros_(0, 0, RCL_ROS_TIME)
 {
@@ -124,6 +146,7 @@ void MujocoRos2Control::init()
   cm_thread_ = std::thread(spin);
 
   // Waiting RM to be initialized through topic robot_description
+  // mj_data_ and mj_model_ will be allocated in the RM simultaneously
   while(!controller_manager_->is_resource_manager_initialized())
   {
     RCLCPP_WARN(logger_, "Waiting RM to load and initialize hardware...");
@@ -153,6 +176,10 @@ void MujocoRos2Control::update()
 
   mj_step2(mj_model_, mj_data_);
 }
+
+mjData* MujocoRos2Control::getMjData() {return mj_data_;}
+
+mjModel* MujocoRos2Control::getMjModel() {return mj_model_;}
 
 void MujocoRos2Control::publish_sim_time(rclcpp::Time sim_time)
 {
