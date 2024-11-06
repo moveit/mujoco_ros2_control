@@ -49,7 +49,7 @@ endif (mujoco_FOUND)
 
 include_directories(include)
 
-add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp)
+add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp src/mujoco_sensor.cpp)
 ament_target_dependencies(mujoco_system_plugins ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_system_plugins ${MUJOCO_LIB})
 target_include_directories(mujoco_system_plugins PUBLIC ${MUJOCO_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR})
