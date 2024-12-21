@@ -36,14 +36,23 @@ set(THIS_PACKAGE_DEPENDS
 )
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
+find_package(mujoco QUIET)
+if(mujoco_FOUND)
+  message(STATUS "Mujoco build from source has been found")
+  set(MUJOCO_LIB mujoco::mujoco)
+  set(MUJOCO_INCLUDE_DIR ${MUJOCO_INCLUDE_DIR})
+else (mujoco_FOUND)
+  message(STATUS "Mujoco build from source has not been found. Attempting to find the binary instead.")
+  find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
+  set(MUJOCO_INCLUDE_DIR $ENV{MUJOCO_DIR}/include)
+endif (mujoco_FOUND)
 
 include_directories(include)
 
 add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp)
 ament_target_dependencies(mujoco_system_plugins ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_system_plugins ${MUJOCO_LIB})
-target_include_directories(mujoco_system_plugins PUBLIC $ENV{MUJOCO_DIR}/include ${EIGEN3_INCLUDE_DIR})
+target_include_directories(mujoco_system_plugins PUBLIC ${MUJOCO_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR})
 
 install(TARGETS
   mujoco_system_plugins
@@ -56,7 +65,7 @@ install(TARGETS
 add_executable(mujoco_ros2_control src/mujoco_ros2_control_node.cpp src/mujoco_rendering.cpp src/mujoco_ros2_control.cpp)
 ament_target_dependencies(mujoco_ros2_control ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_ros2_control ${MUJOCO_LIB} glfw)
-target_include_directories(mujoco_ros2_control PUBLIC $ENV{MUJOCO_DIR}/include ${EIGEN3_INCLUDE_DIR})
+target_include_directories(mujoco_ros2_control PUBLIC ${MUJOCO_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR})
 
 install(TARGETS
   mujoco_ros2_control
