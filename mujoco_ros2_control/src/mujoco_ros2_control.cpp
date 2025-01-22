@@ -21,8 +21,16 @@ public:
   ~MJResourceManager() override
   {
     // release resources when exit or failure
-    mj_deleteModel(mj_model_);
-    mj_deleteData(mj_data_);
+    if (mj_data_)
+    {
+      mj_deleteData(mj_data_);
+      mj_data_ = nullptr;
+    }
+    if (mj_model_)
+    {
+      mj_deleteModel(mj_model_);
+      mj_model_ = nullptr;
+    }
   }
 
   /// Called from ControllerManager when {robot_description} is initialized from callback.
@@ -97,6 +105,7 @@ private:
 
 MujocoRos2Control::MujocoRos2Control(const rclcpp::Node::SharedPtr & node, const rclcpp::NodeOptions & cm_node_option)
   : node_(node), cm_node_option_(cm_node_option),
+      mj_model_(nullptr), mj_data_(nullptr),
       logger_(rclcpp::get_logger(node_->get_name() + std::string(".mujoco_ros2_control"))),
       control_period_(rclcpp::Duration(1, 0)), last_update_sim_time_ros_(0, 0, RCL_ROS_TIME)
 {

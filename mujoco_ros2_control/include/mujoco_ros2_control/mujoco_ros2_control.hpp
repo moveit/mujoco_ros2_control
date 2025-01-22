@@ -28,9 +28,9 @@ public:
 private:
   void publish_sim_time(rclcpp::Time sim_time);
   rclcpp::Node::SharedPtr node_;
-  mjModel* mj_model_ = nullptr;
-  mjData* mj_data_ = nullptr;
   rclcpp::NodeOptions cm_node_option_;
+  mjModel* mj_model_;
+  mjData* mj_data_;
 
   rclcpp::Logger logger_;
   std::shared_ptr<pluginlib::ClassLoader<MujocoSystemInterface>> robot_hw_sim_loader_;
