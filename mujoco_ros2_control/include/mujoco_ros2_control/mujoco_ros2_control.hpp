@@ -12,17 +12,23 @@
 
 namespace mujoco_ros2_control
 {
+// declare in advance
+class MJResourceManager;
+
 class MujocoRos2Control
 {
 public:
-  MujocoRos2Control(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data);
+  MujocoRos2Control(const rclcpp::Node::SharedPtr & node, const rclcpp::NodeOptions & cm_node_option);
   ~MujocoRos2Control();
   void init();
   void update();
+  mjData* getMjData();
+  mjModel* getMjModel();
 
 private:
   void publish_sim_time(rclcpp::Time sim_time);
-  rclcpp::Node::SharedPtr node_;  // TODO: delete node
+  rclcpp::Node::SharedPtr node_;
+  rclcpp::NodeOptions cm_node_option_;
   mjModel* mj_model_;
   mjData* mj_data_;
 
@@ -32,7 +38,7 @@ private:
   std::shared_ptr<controller_manager::ControllerManager> controller_manager_;
   rclcpp::executors::MultiThreadedExecutor::SharedPtr cm_executor_;
   std::thread cm_thread_;
-  bool stop_cm_thread_;
+  bool stop_cm_thread_ = false;
   rclcpp::Duration control_period_;
 
   rclcpp::Time last_update_sim_time_ros_;

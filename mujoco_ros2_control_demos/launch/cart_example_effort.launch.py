@@ -31,10 +31,10 @@ def generate_launch_description():
         executable='mujoco_ros2_control',
         output='screen',
         parameters=[
-            robot_description,
             controller_config_file,
             {'mujoco_model_path':os.path.join(mujoco_ros2_control_demos_path, 'mujoco_models', 'test_cart.xml')}
-        ]
+        ],
+        # arguments=["--ros-args", "--log-level", "debug"]
     )
 
     node_robot_state_publisher = Node(
@@ -50,10 +50,12 @@ def generate_launch_description():
         output='screen'
     )
 
-    load_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'effort_controller'],
+    load_joint_effort_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'effort_controller'],
         output='screen'
     )
+
 
     return LaunchDescription([
         RegisterEventHandler(
@@ -65,7 +67,7 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=load_joint_state_controller,
-                on_exit=[load_joint_trajectory_controller],
+                on_exit=[load_joint_effort_controller],
             )
         ),
         node_mujoco_ros2_control,

@@ -12,6 +12,7 @@ class MujocoRendering
 public:
   MujocoRendering(const MujocoRendering& obj) = delete;
   void operator=(const MujocoRendering &) = delete;
+  ~MujocoRendering();
 
   static MujocoRendering* get_instance();
   void init(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data);
