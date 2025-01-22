@@ -47,5 +47,6 @@ int main(int argc, const char** argv) {
   }
 
   RCLCPP_INFO(node->get_logger(), "Mujoco Sim Stop ...");
+  rclcpp::shutdown();
   return 0;
 }

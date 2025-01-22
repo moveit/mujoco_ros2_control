@@ -10,7 +10,7 @@ class MJResourceManager : public hardware_interface::ResourceManager{
 public:
   MJResourceManager(rclcpp::Node::SharedPtr& node, mjModel*& mj_model, mjData*& mj_data)
   : hardware_interface::ResourceManager(node->get_node_clock_interface(), node->get_node_logging_interface()),
-        mj_system_loader_("mujoco_ros2_control", "mujoco_ros2_control::MujocoSystemInterface"),
+        //mj_system_loader_("mujoco_ros2_control", "mujoco_ros2_control::MujocoSystemInterface"),
         logger_(node->get_logger().get_child("MJResourceManager")), mj_model_(mj_model), mj_data_(mj_data)
   {
     node_ = node;
@@ -62,15 +62,16 @@ public:
       // Load hardware
       std::unique_ptr<MujocoSystemInterface> mjSimSystem;
       std::scoped_lock guard(resource_interfaces_lock_, claimed_command_interfaces_lock_);
-      try
-      {
-        mjSimSystem = std::unique_ptr<MujocoSystemInterface>(
-          mj_system_loader_.createUnmanagedInstance(robot_hw_sim_type_str_));
-      } catch (pluginlib::PluginlibException & ex) {
-        RCLCPP_ERROR_STREAM(logger_, "The plugin failed to load. Error: " << ex.what());
-        continue;
-      }
-
+//      try
+//      {
+//        mjSimSystem = std::unique_ptr<MujocoSystemInterface>(
+//          mj_system_loader_.createUnmanagedInstance(robot_hw_sim_type_str_));
+//      } catch (pluginlib::PluginlibException & ex) {
+//        RCLCPP_ERROR_STREAM(logger_, "The plugin failed to load. Error: " << ex.what());
+//        continue;
+//      }
+      std::unique_ptr<MujocoSystemInterface> mjSystemIface = std::make_unique<MujocoSystem>();
+      mjSimSystem = std::move(mjSystemIface);
       // initialize simulation required resource from the hardware info.
       urdf::Model urdf_model;
       urdf_model.initString(urdf);
@@ -88,7 +89,7 @@ public:
 
 private:
   std::shared_ptr<rclcpp::Node> node_;
-  pluginlib::ClassLoader<MujocoSystemInterface> mj_system_loader_;
+  //pluginlib::ClassLoader<MujocoSystemInterface> mj_system_loader_;
   rclcpp::Logger logger_;
   mjModel*& mj_model_;
   mjData*& mj_data_;
