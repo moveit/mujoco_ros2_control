@@ -38,21 +38,29 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 find_package(mujoco QUIET)
 if(mujoco_FOUND)
-  message(STATUS "Mujoco build from source")
+  message(STATUS "Mujoco build from source has been found")
   set(MUJOCO_LIB mujoco::mujoco)
   set(MUJOCO_INCLUDE_DIR ${MUJOCO_INCLUDE_DIR})
-else (mujoco_FOUND)
-  message(STATUS "Mujoco build from binary")
+elseif (DEFINED ENV{MUJOCO_DIR})
+  message(STATUS "Mujoco build from source has not been found. Attempting to find the binary in $ENV{MUJOCO_DIR} instead.")
   find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
+  if(NOT MUJOCO_LIB)
+    message(FATAL_ERROR "Failed to find binary in $ENV{MUJOCO_DIR}")
+  endif()
   set(MUJOCO_INCLUDE_DIR $ENV{MUJOCO_DIR}/include)
+else()
+  message(FATAL_ERROR "Failed to find mujoco with find_package. Either build and install mujoco from source or set the MUJOCO_DIR environment variable to tell CMake where to find the binary install. ")
 endif (mujoco_FOUND)
-
-include_directories(include)
 
 add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp src/mujoco_sensor.cpp)
 ament_target_dependencies(mujoco_system_plugins ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_system_plugins ${MUJOCO_LIB})
-target_include_directories(mujoco_system_plugins PUBLIC ${MUJOCO_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR})
+target_include_directories(mujoco_system_plugins
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${MUJOCO_INCLUDE_DIR}
+    ${EIGEN3_INCLUDE_DIR})
 
 install(TARGETS
   mujoco_system_plugins
@@ -62,13 +70,15 @@ install(TARGETS
 )
 
 # TODO: make it simple
-add_executable(mujoco_ros2_control
-        src/mujoco_ros2_control_node.cpp src/mujoco_rendering.cpp
-        src/mujoco_ros2_control.cpp src/mujoco_system.cpp
-        src/mujoco_sensor.cpp)
+add_executable(mujoco_ros2_control src/mujoco_ros2_control_node.cpp src/mujoco_rendering.cpp src/mujoco_ros2_control.cpp)
 ament_target_dependencies(mujoco_ros2_control ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_ros2_control ${MUJOCO_LIB} glfw)
-target_include_directories(mujoco_ros2_control PUBLIC ${MUJOCO_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIR})
+target_include_directories(mujoco_ros2_control
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${MUJOCO_INCLUDE_DIR}
+    ${EIGEN3_INCLUDE_DIR})
 
 install(TARGETS
   mujoco_ros2_control
