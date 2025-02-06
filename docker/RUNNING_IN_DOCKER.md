@@ -17,7 +17,7 @@ REPOSITORY                       TAG       IMAGE ID       CREATED             SI
 mujoco_ros2                      latest    37874e0d663a   6 minutes ago       1.52GB
 ```
 
-To run the container use [the run script](./run.sh), which will drop you into the pre-compiled workspace.
+To launch the container use [the run script](./run.sh), which will drop you into the pre-compiled workspace.
 From here launch any of the demo launch scripts:
 
 ```bash
@@ -30,5 +30,13 @@ The run script includes the required variables to enable a Ubuntu host to pass t
 However, it may be required to give permissions prior to launching the container with:
 
 ```bash
+# Run on host prior to launching the container
 xhost +local:docker
+```
+
+To test the MuJoCo install and rendering:
+
+```bash
+$ ./docker/run.sh
+root@ubuntu-linux:/home/ros2_ws# ${MUJOCO_DIR}/bin/simulate ${MUJOCO_DIR}/model/humanoid/humanoid.xml
 ```
