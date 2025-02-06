@@ -1,27 +1,39 @@
 ARG ROS_DISTRO=humble
-FROM ros:$ROS_DISTRO
-ARG MUJOCO_VERSION=3.0.1
-ARG BRANCH=humble-devel
 
+FROM ros:${ROS_DISTRO}
+
+ARG MUJOCO_VERSION=3.2.7
+ARG CPU_ARCH=x86_64
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Configure base dependencies
 RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y python3-pip wget
-ENV SHELL /bin/bash
-
+RUN apt-get install -y python3-pip wget libglfw3-dev
 RUN pip3 install xacro
-# install mujoco
-ENV MUJOCO_VERSION $MUJOCO_VERSION
-RUN apt-get install -y libglfw3-dev
-RUN wget https://github.com/google-deepmind/mujoco/releases/download/$MUJOCO_VERSION/mujoco-$MUJOCO_VERSION-linux-x86_64.tar.gz
+
+# Configure and install MuJoCo
+ENV MUJOCO_VERSION=${MUJOCO_VERSION}
+ENV MUJOCO_DIR="/opt/mujoco/mujoco-${MUJOCO_VERSION}"
+RUN mkdir -p ${MUJOCO_DIR}
+
+RUN wget https://github.com/google-deepmind/mujoco/releases/download/${MUJOCO_VERSION}/mujoco-${MUJOCO_VERSION}-linux-${CPU_ARCH}.tar.gz
 RUN mkdir -p /home/mujoco
-RUN tar -xzf mujoco-3.0.1-linux-x86_64.tar.gz -C "/home/mujoco"
+RUN tar -xzf "mujoco-${MUJOCO_VERSION}-linux-${CPU_ARCH}.tar.gz" -C $(dirname "${MUJOCO_DIR}")
 
-RUN mkdir -p /home/ros2_ws/src \
-    && cd /home/ros2_ws/src/ \
-    && git clone -b $BRANCH https://github.com/sangteak601/mujoco_ros2_control.git \
-    && rosdep fix-permissions && rosdep update \
-    && rosdep install rosdep install --from-paths ./ --ignore-src -y
+# Install existing src and dependencies
+ENV ROS_WS="/home/ros2_ws/"
+RUN mkdir -p ${ROS_WS}/src
+WORKDIR ${ROS_WS}
+COPY . src/
 
-RUN echo 'export MUJOCO_DIR=/home/mujoco/mujoco-$MUJOCO_VERSION' >> ~/.bashrc
-RUN echo 'source /opt/ros/humble/setup.bash' >> ~/.bashrc
+# Install ROS dependencies
+RUN rosdep update && rosdep install --from-paths src/ --ignore-src -y
+
+# Compile
+RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=ON
+
+RUN echo 'source ${ROS_WS}/install/setup.bash' >> ~/.bashrc
 
 CMD ["/bin/bash"]
