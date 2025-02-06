@@ -29,6 +29,10 @@ colcon build
 ## Usage
 See the [documentation](doc/index.rst) for usage.
 
+## Docker
+A basic containerized workflow is provided to test this package in isolation.
+For more information refer to the [docker documentation](docker/RUNNING_IN_DOCKER.md).
+
 ## Future Work
 Here are several potential areas for future improvement:
 
