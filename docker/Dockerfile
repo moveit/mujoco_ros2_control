@@ -32,7 +32,7 @@ RUN rosdep update && rosdep install --from-paths src/ --ignore-src -y
 
 # Compile
 RUN . /opt/ros/${ROS_DISTRO}/setup.bash && \
-    colcon build --cmake-args -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_TESTING=ON
 
 RUN echo 'source ${ROS_WS}/install/setup.bash' >> ~/.bashrc
 

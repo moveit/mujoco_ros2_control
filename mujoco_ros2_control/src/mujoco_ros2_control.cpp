@@ -97,9 +97,9 @@ void MujocoRos2Control::init()
   // Create the controller manager
   RCLCPP_INFO(logger_, "Loading controller_manager");
   cm_executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
-  controller_manager_.reset(new controller_manager::ControllerManager(
+  controller_manager_ = std::make_shared<controller_manager::ControllerManager>(
       std::move(resource_manager), cm_executor_,
-      "controller_manager", node_->get_namespace()));
+      "controller_manager", node_->get_namespace());
 
   cm_executor_->add_node(controller_manager_);
 
