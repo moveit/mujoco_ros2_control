@@ -102,7 +102,7 @@ std::vector<hardware_interface::CommandInterface> MujocoSystem::export_command_i
   return new_command_interfaces;
 }
 
-hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & time, const rclcpp::Duration & period)
+hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & /* time */, const rclcpp::Duration & /* period */)
 {
   // Joint states
   for (auto& joint_state : joint_states_)
@@ -113,10 +113,10 @@ hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & time, co
   }
 
   // IMU Sensor data
-  for (auto& data : imu_sensor_data_)
-  {
-    // TODO
-  }
+  // TODO: For now all sensors are assumed to be FTS
+  // for (auto& data : imu_sensor_data_)
+  // {
+  // }
 
   // FT Sensor data
   for (auto& data : ft_sensor_data_)
@@ -133,7 +133,7 @@ hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & time, co
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & time, const rclcpp::Duration & period)
+hardware_interface::return_type MujocoSystem::write(const rclcpp::Time & /* time */, const rclcpp::Duration & period)
 {
   // update mimic joint
   for (auto& joint_state : joint_states_)
@@ -361,7 +361,7 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
   }
 }
 
-void MujocoSystem::register_sensors(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info)
+void MujocoSystem::register_sensors(const urdf::Model& /* urdf_model */, const hardware_interface::HardwareInfo & hardware_info)
 {
   // TODO: for now, assuming all sensors are ft_sensor
   ft_sensor_data_.resize(hardware_info.sensors.size());
