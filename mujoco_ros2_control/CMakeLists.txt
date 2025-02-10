@@ -52,7 +52,7 @@ else()
   message(FATAL_ERROR "Failed to find mujoco with find_package. Either build and install mujoco from source or set the MUJOCO_DIR environment variable to tell CMake where to find the binary install. ")
 endif (mujoco_FOUND)
 
-add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp)
+add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp src/mujoco_sensor.cpp)
 ament_target_dependencies(mujoco_system_plugins ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_system_plugins ${MUJOCO_LIB})
 target_include_directories(mujoco_system_plugins

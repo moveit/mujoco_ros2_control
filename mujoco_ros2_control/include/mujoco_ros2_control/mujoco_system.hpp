@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include "mujoco_ros2_control/mujoco_system_interface.hpp"
+#include "mujoco_ros2_control/mujoco_sensor.hpp"
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "joint_limits/joint_limits.hpp"
 #include "control_toolbox/pid.hpp"
@@ -58,29 +59,6 @@ public:
     int mj_vel_adr;
   };
 
-  template <typename T>
-  struct SensorData
-  {
-    std::string name;
-    T data;
-    int mj_sensor_index;
-  };
-
-  struct FTSensorData
-  {
-    std::string name;
-    SensorData<Eigen::Vector3d> force;
-    SensorData<Eigen::Vector3d> torque;
-  };
-
-  struct IMUSensorData
-  {
-    std::string name;
-    SensorData<Eigen::Quaternion<double>> orientation;
-    SensorData<Eigen::Vector3d> angular_velocity;
-    SensorData<Eigen::Vector3d> linear_velocity;
-  };
-
 private:
   void register_joints(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info);
   void register_sensors(const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info);
@@ -96,13 +74,13 @@ private:
   std::vector<hardware_interface::CommandInterface> command_interfaces_;
 
   std::vector<JointState> joint_states_;
-  std::vector<FTSensorData> ft_sensor_data_;
-  std::vector<IMUSensorData> imu_sensor_data_;
+  std::vector<IMUSensor> imu_sensors_;
+  std::vector<FTSensor> ft_sensors_;
 
   mjModel* mj_model_;
   mjData* mj_data_;
 
-  rclcpp::Logger logger_;  // TODO: delete?
+  rclcpp::Logger logger_;
 };
 }  // namespace mujoco_ros2_control
 

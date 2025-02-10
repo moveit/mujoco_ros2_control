@@ -5,40 +5,30 @@
 #include "mujoco_ros2_control/mujoco_ros2_control.hpp"
 #include "mujoco_ros2_control/mujoco_rendering.hpp"
 
-// MuJoCo data structures
-mjModel* mujoco_model = nullptr;
-mjData* mujoco_data = nullptr;
-
 // main function
 int main(int argc, const char** argv) {
-
   rclcpp::init(argc, argv);
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("mujoco_ros2_control_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
 
-  RCLCPP_INFO_STREAM(node->get_logger(), "Initializing mujoco_ros2_control node...");
-  auto model_path = node->get_parameter("mujoco_model_path").as_string();
-
-  // load and compile model
-  char error[1000] = "Could not load binary model";
-  if (std::strlen(model_path.c_str())>4 && !std::strcmp(model_path.c_str()+std::strlen(model_path.c_str())-4, ".mjb")) {
-    mujoco_model = mj_loadModel(model_path.c_str(), 0);
-  } else {
-    mujoco_model = mj_loadXML(model_path.c_str(), 0, error, 1000);
+  // get the ros arg, mainly for getting --param-file for cm
+  rclcpp::NodeOptions cm_node_options = controller_manager::get_cm_node_options();
+  std::vector<std::string> node_arguments = cm_node_options.arguments();
+  for(int i = 1; i < argc; ++i)
+  {
+    if(node_arguments.empty() && std::string(argv[i]) != "--ros-args") continue;
+    node_arguments.emplace_back(argv[i]);
   }
-  if (!mujoco_model) {
-    mju_error("Load model error: %s", error);
-  }
-
-  RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco model has been successfully loaded !");
-  // make data
-  mujoco_data = mj_makeData(mujoco_model);
+  cm_node_options.arguments(node_arguments);
 
   // initialize mujoco control
-  auto control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
+  RCLCPP_INFO_STREAM(node->get_logger(), "Initializing mujoco_ros2_control node...");
+  auto control = mujoco_ros2_control::MujocoRos2Control(node, cm_node_options);
   control.init();
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
 
-  // initialize mujoco redering
+  // initialize mujoco rendering
+  mjData* mujoco_data = control.getMjData();
+  mjModel* mujoco_model = control.getMjModel();
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
   rendering->init(node, mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
@@ -56,11 +46,7 @@ int main(int argc, const char** argv) {
     rendering->update();
   }
 
-  rendering->close();
-
-  // free MuJoCo model and data
-  mj_deleteData(mujoco_data);
-  mj_deleteModel(mujoco_model);
-
-  return 1;
+  RCLCPP_INFO(node->get_logger(), "Mujoco Sim Stop ...");
+  rclcpp::shutdown();
+  return 0;
 }

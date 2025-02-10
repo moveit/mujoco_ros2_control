@@ -78,6 +78,7 @@
     </hardware>
 
     <sensor name="fts_sensor">
+        <param name="type">FTSensor</param>
         <state_interface name="force.x"/>
         <state_interface name="force.y"/>
         <state_interface name="force.z"/>
