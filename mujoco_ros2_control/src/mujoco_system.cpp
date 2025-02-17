@@ -8,98 +8,12 @@ MujocoSystem::MujocoSystem() : logger_(rclcpp::get_logger(""))
 
 std::vector<hardware_interface::StateInterface> MujocoSystem::export_state_interfaces()
 {
-  std::vector<hardware_interface::StateInterface> new_state_interfaces;
-
-  for (auto& joint : joint_states_)
-  {
-    // Add state interfaces for joint hardware.
-    if (auto it = joint_hw_info_.find(joint.name); it != joint_hw_info_.end())
-    {
-      for (const auto& state_if : it->second.state_interfaces)
-      {
-        if (state_if.name == hardware_interface::HW_IF_POSITION)
-        {
-          new_state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &joint.position);
-        }
-        else if (state_if.name == hardware_interface::HW_IF_VELOCITY)
-        {
-          new_state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &joint.velocity);
-        }
-        else if (state_if.name == hardware_interface::HW_IF_EFFORT)
-        {
-          new_state_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &joint.effort);
-        }
-      }
-    }
-  }
-
-  // Add state interfaces for sensors
-  for (auto& sensor : ft_sensor_data_)
-  {
-    if (auto it = sensors_hw_info_.find(sensor.name); it != sensors_hw_info_.end())
-    {
-      for (const auto& state_if : it->second.state_interfaces)
-      {
-        if (state_if.name == "force.x")
-        {
-          new_state_interfaces.emplace_back(sensor.name, state_if.name, &sensor.force.data.x());
-        }
-        else if (state_if.name == "force.y")
-        {
-          new_state_interfaces.emplace_back(sensor.name, state_if.name, &sensor.force.data.y());
-        }
-        else if (state_if.name == "force.z")
-        {
-          new_state_interfaces.emplace_back(sensor.name, state_if.name, &sensor.force.data.z());
-        }
-        else if (state_if.name == "torque.x")
-        {
-          new_state_interfaces.emplace_back(sensor.name, state_if.name, &sensor.torque.data.x());
-        }
-        else if (state_if.name == "torque.y")
-        {
-          new_state_interfaces.emplace_back(sensor.name, state_if.name, &sensor.torque.data.y());
-        }
-        else if (state_if.name == "torque.z")
-        {
-          new_state_interfaces.emplace_back(sensor.name, state_if.name, &sensor.torque.data.z());
-        }
-      }
-    }
-  }
-
-  return new_state_interfaces;
+  return std::move(state_interfaces_);
 }
 
 std::vector<hardware_interface::CommandInterface> MujocoSystem::export_command_interfaces()
 {
-  std::vector<hardware_interface::CommandInterface> new_command_interfaces;
-
-  // Joint command interfaces
-  for (auto& joint : joint_states_)
-  {
-    // Add command interfaces for joint hardware.
-    if (auto it = joint_hw_info_.find(joint.name); it != joint_hw_info_.end())
-    {
-      for (const auto& command_if : it->second.command_interfaces)
-      {
-        if (command_if.name.find(hardware_interface::HW_IF_POSITION) != std::string::npos)
-        {
-          new_command_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &joint.position_command);
-        }
-        else if (command_if.name.find(hardware_interface::HW_IF_VELOCITY) != std::string::npos)
-        {
-          new_command_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &joint.velocity_command);
-        }
-        else if (command_if.name == hardware_interface::HW_IF_EFFORT)
-        {
-          new_command_interfaces.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &joint.effort_command);
-        }
-      }
-    }
-  }
-
-  return new_command_interfaces;
+  return std::move(command_interfaces_);
 }
 
 hardware_interface::return_type MujocoSystem::read(const rclcpp::Time & /* time */, const rclcpp::Duration & /* period */)
@@ -200,7 +114,7 @@ bool MujocoSystem::init_sim(rclcpp::Node::SharedPtr& node, mjModel* mujoco_model
   logger_ = rclcpp::get_logger(node_->get_name() + std::string("mujoco_system"));
 
   register_joints(urdf_model, hardware_info);
-  register_sensors(urdf_model, hardware_info);
+  register_sensors(urdf_model,hardware_info);
 
   set_initial_pose();
   return true;
@@ -219,9 +133,6 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
       RCLCPP_ERROR_STREAM(logger_, "Failed to find joint in mujoco model, joint name: " << joint.name);
       continue;
     }
-
-    // Add to the joint hw information map
-    joint_hw_info_.insert(std::make_pair(joint.name, joint));
 
     // save information in joint_states_ variable
     JointState joint_state;
@@ -275,19 +186,22 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
       }
     };
 
-    // Set initial values
+    // state interfaces
     for (const auto& state_if : joint.state_interfaces)
     {
       if (state_if.name == hardware_interface::HW_IF_POSITION)
       {
+        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &last_joint_state.position);
         last_joint_state.position = get_initial_value(state_if);
       }
       else if (state_if.name == hardware_interface::HW_IF_VELOCITY)
       {
+        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &last_joint_state.velocity);
         last_joint_state.velocity = get_initial_value(state_if);
       }
       else if (state_if.name == hardware_interface::HW_IF_EFFORT)
       {
+        state_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &last_joint_state.effort);
         last_joint_state.effort = get_initial_value(state_if);
       }
     }
@@ -324,6 +238,7 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
     {
       if (command_if.name.find(hardware_interface::HW_IF_POSITION) != std::string::npos)
       {
+        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_POSITION, &last_joint_state.position_command);
         last_joint_state.is_position_control_enabled = true;
         last_joint_state.position_command = last_joint_state.position;
         // TODO: These are not used at all. Potentially can be removed.
@@ -332,6 +247,7 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
       }
       else if (command_if.name.find(hardware_interface::HW_IF_VELOCITY) != std::string::npos)
       {
+        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_VELOCITY, &last_joint_state.velocity_command);
         last_joint_state.is_velocity_control_enabled = true;
         last_joint_state.velocity_command = last_joint_state.velocity;
         // TODO: These are not used at all. Potentially can be removed.
@@ -340,6 +256,7 @@ void MujocoSystem::register_joints(const urdf::Model& urdf_model, const hardware
       }
       else if (command_if.name == hardware_interface::HW_IF_EFFORT)
       {
+        command_interfaces_.emplace_back(joint.name, hardware_interface::HW_IF_EFFORT, &last_joint_state.effort_command);
         last_joint_state.is_effort_control_enabled = true;
         last_joint_state.effort_command = last_joint_state.effort;
         last_joint_state.min_effort_command = get_min_value(command_if);
@@ -370,9 +287,6 @@ void MujocoSystem::register_sensors(const urdf::Model& /* urdf_model */, const h
   {
     auto sensor = hardware_info.sensors.at(sensor_index);
 
-    // Add to the sensor hw information map
-    sensors_hw_info_.insert(std::make_pair(sensor.name, sensor));
-
     FTSensorData sensor_data;
     sensor_data.name = sensor.name;
     sensor_data.force.name = sensor.name + "_force";
@@ -391,6 +305,35 @@ void MujocoSystem::register_sensors(const urdf::Model& /* urdf_model */, const h
     sensor_data.torque.mj_sensor_index = mj_model_->sensor_adr[torque_sensor_id];
 
     ft_sensor_data_.at(sensor_index) = sensor_data;
+    auto& last_sensor_data = ft_sensor_data_.at(sensor_index);
+
+    for (const auto& state_if : sensor.state_interfaces)
+    {
+      if (state_if.name == "force.x")
+      {
+        state_interfaces_.emplace_back(sensor.name, state_if.name, &last_sensor_data.force.data.x());
+      }
+      else if (state_if.name == "force.y")
+      {
+        state_interfaces_.emplace_back(sensor.name, state_if.name, &last_sensor_data.force.data.y());
+      }
+      else if (state_if.name == "force.z")
+      {
+        state_interfaces_.emplace_back(sensor.name, state_if.name, &last_sensor_data.force.data.z());
+      }
+      else if (state_if.name == "torque.x")
+      {
+        state_interfaces_.emplace_back(sensor.name, state_if.name, &last_sensor_data.torque.data.x());
+      }
+      else if (state_if.name == "torque.y")
+      {
+        state_interfaces_.emplace_back(sensor.name, state_if.name, &last_sensor_data.torque.data.y());
+      }
+      else if (state_if.name == "torque.z")
+      {
+        state_interfaces_.emplace_back(sensor.name, state_if.name, &last_sensor_data.torque.data.z());
+      }
+    }
   }
 }
 

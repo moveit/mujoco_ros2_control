@@ -92,12 +92,12 @@ private:
     return (v < lo) ? lo : (hi < v) ? hi : v;
   }
 
+  std::vector<hardware_interface::StateInterface> state_interfaces_;
+  std::vector<hardware_interface::CommandInterface> command_interfaces_;
+
   std::vector<JointState> joint_states_;
   std::vector<FTSensorData> ft_sensor_data_;
   std::vector<IMUSensorData> imu_sensor_data_;
-
-  std::unordered_map<std::string, hardware_interface::ComponentInfo> joint_hw_info_;
-  std::unordered_map<std::string, hardware_interface::ComponentInfo> sensors_hw_info_;
 
   mjModel* mj_model_;
   mjData* mj_data_;
