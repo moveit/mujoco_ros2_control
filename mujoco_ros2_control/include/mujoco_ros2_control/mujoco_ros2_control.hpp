@@ -19,6 +19,9 @@ public:
   ~MujocoRos2Control();
   void init();
   void update();
+  void set_pause_simulation(bool pause);
+  bool is_paused() const;
+  void step_once();
 
 private:
   void publish_sim_time(rclcpp::Time sim_time);
@@ -37,6 +40,8 @@ private:
 
   rclcpp::Time last_update_sim_time_ros_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;
+
+  bool pause_simulation_;
 };
 }  // namespace mujoco_ros2_control
 

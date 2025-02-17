@@ -8,7 +8,7 @@ namespace mujoco_ros2_control
 {
 MujocoRos2Control::MujocoRos2Control(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data)
   : node_(node), mj_model_(mujoco_model), mj_data_(mujoco_data), logger_(rclcpp::get_logger(node_->get_name() + std::string(".mujoco_ros2_control"))),
-    control_period_(rclcpp::Duration(1, 0)), last_update_sim_time_ros_(0, 0, RCL_ROS_TIME)
+    control_period_(rclcpp::Duration(1, 0)), last_update_sim_time_ros_(0, 0, RCL_ROS_TIME), pause_simulation_(false)
 {
 }
 
@@ -128,28 +128,43 @@ void MujocoRos2Control::init()
 
 void MujocoRos2Control::update()
 {
+  rclcpp::Time sim_time_ros;
+  rclcpp::Duration sim_period = rclcpp::Duration::from_seconds(0);
+
+  if (pause_simulation_) {
+    // when paused, use the wall clock
+    sim_time_ros = node_->get_clock()->now();
+    sim_period = control_period_;
+  }
+  else {
   // Get the simulation time and period
-  auto sim_time = mj_data_->time;
-  int sim_time_sec = static_cast<int>(sim_time);
-  int sim_time_nanosec = static_cast<int>((sim_time - sim_time_sec)*1000000000);
-
-  rclcpp::Time sim_time_ros(sim_time_sec, sim_time_nanosec, RCL_ROS_TIME);
-  rclcpp::Duration sim_period = sim_time_ros - last_update_sim_time_ros_;
-
+    auto sim_time = mj_data_->time;
+    int sim_time_sec = static_cast<int>(sim_time);
+    int sim_time_nanosec = static_cast<int>((sim_time - sim_time_sec)*1000000000);
+    
+    sim_time_ros = rclcpp::Time(sim_time_sec, sim_time_nanosec, RCL_ROS_TIME);
+    sim_period = sim_time_ros - last_update_sim_time_ros_;
+  }
   publish_sim_time(sim_time_ros);
-
-  mj_step1(mj_model_, mj_data_);
-
+  
+  if (!pause_simulation_) {
+    mj_step1(mj_model_, mj_data_);
+  }
+  
   if (sim_period >= control_period_) {
     controller_manager_->read(sim_time_ros, sim_period);
     controller_manager_->update(sim_time_ros, sim_period);
-    last_update_sim_time_ros_ = sim_time_ros;
+    if (!pause_simulation_) {
+      last_update_sim_time_ros_ = sim_time_ros;
+    }
   }
-
+  
   // use same time as for read and update call - this is how it is done in ros2_control_node
   controller_manager_->write(sim_time_ros, sim_period);
-
-  mj_step2(mj_model_, mj_data_);
+  
+  if (!pause_simulation_) {
+    mj_step2(mj_model_, mj_data_);
+  }
 }
 
 void MujocoRos2Control::publish_sim_time(rclcpp::Time sim_time)
@@ -159,5 +174,32 @@ void MujocoRos2Control::publish_sim_time(rclcpp::Time sim_time)
   sim_time_msg.clock = sim_time;
   clock_publisher_->publish(sim_time_msg);
 }
+
+void MujocoRos2Control::set_pause_simulation(bool pause)
+{
+  pause_simulation_ = pause;
+}
+
+bool MujocoRos2Control::is_paused() const
+{
+  return pause_simulation_;
+}
+
+void MujocoRos2Control::step_once()
+{
+  mj_step1(mj_model_, mj_data_);
+  
+  controller_manager_->read(last_update_sim_time_ros_ + control_period_, control_period_);
+  controller_manager_->update(last_update_sim_time_ros_ + control_period_, control_period_);
+  controller_manager_->write(last_update_sim_time_ros_ + control_period_, control_period_);
+  
+  mj_step2(mj_model_, mj_data_);
+  
+  auto sim_time = mj_data_->time;
+  int sim_time_sec = static_cast<int>(sim_time);
+  int sim_time_nanosec = static_cast<int>((sim_time - sim_time_sec) * 1000000000);
+  last_update_sim_time_ros_ = rclcpp::Time(sim_time_sec, sim_time_nanosec, RCL_ROS_TIME);
+}
+
 
 } // namespace mujoco_ros2_control
