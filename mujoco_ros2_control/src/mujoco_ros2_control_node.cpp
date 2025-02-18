@@ -71,7 +71,8 @@ int main(int argc, const char **argv)
   rendering->init(node, mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
-  // run main loop, target real-time simulation and 60 fps rendering
+  // run main loop, target real-time simulation and 60 fps rendering with cameras around 6 hz
+  mjtNum last_cam_update = mujoco_data->time;
   while (rclcpp::ok() && !rendering->is_close_flag_raised())
   {
     // advance interactive simulation for 1/60 sec
@@ -84,6 +85,14 @@ int main(int argc, const char **argv)
       control.update();
     }
     rendering->update();
+
+    // Updating cameras at ~6 Hz
+    // TODO: Break control and rendering into separate processes
+    if (simstart - last_cam_update > 1.0/6.0)
+    {
+      rendering->update_cameras();
+      last_cam_update = simstart;
+    }
   }
 
   rendering->close();
