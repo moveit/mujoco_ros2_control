@@ -63,4 +63,3 @@ You need to pass parameters for paths as shown in the following example.
           {'mujoco_model_path':os.path.join(mujoco_ros2_control_demos_path, 'mujoco_models', 'test_cart_position.xml')}
       ]
   )
-

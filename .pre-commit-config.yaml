@@ -52,4 +52,4 @@ repos:
         name: ament_copyright
         entry: ament_copyright
         language: system
-        exclude: .*/conf\.py$
+        exclude: '.*(conf\.py|launch\.py)$'
