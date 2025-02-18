@@ -20,6 +20,8 @@
 
 #include "mujoco_ros2_control/mujoco_rendering.hpp"
 
+#include "sensor_msgs/image_encodings.hpp"
+
 namespace mujoco_ros2_control
 {
 MujocoRendering *MujocoRendering::instance_ = nullptr;
@@ -59,9 +61,10 @@ void MujocoRendering::init(
   }
 
   // create window, make OpenGL context current, request v-sync
+  glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+  glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
   window_ = glfwCreateWindow(1200, 900, "Demo", NULL, NULL);
   glfwMakeContextCurrent(window_);
-  glfwSwapInterval(1);
 
   // initialize visualization data structures
   mjv_defaultCamera(&mjv_cam_);
@@ -69,7 +72,8 @@ void MujocoRendering::init(
   mjv_defaultScene(&mjv_scn_);
   mjr_defaultContext(&mjr_con_);
 
-  mjv_cam_.distance = 10.;
+  mjv_cam_.type = mjCAMERA_FREE;
+  mjv_cam_.distance = 8.;
 
   // create scene and context
   mjv_makeScene(mj_model_, &mjv_scn_, 2000);
@@ -80,6 +84,13 @@ void MujocoRendering::init(
   glfwSetCursorPosCallback(window_, &MujocoRendering::mouse_move_callback);
   glfwSetMouseButtonCallback(window_, &MujocoRendering::mouse_button_callback);
   glfwSetScrollCallback(window_, &MujocoRendering::scroll_callback);
+
+  // Add user cameras
+  register_cameras();
+
+  // This might cause tearing, but having RViz and the renderer both open can
+  // wreak havoc on the rendering process.
+  glfwSwapInterval(0);
 }
 
 bool MujocoRendering::is_close_flag_raised() { return glfwWindowShouldClose(window_); }
@@ -89,6 +100,10 @@ void MujocoRendering::update()
   // get framebuffer viewport
   mjrRect viewport = {0, 0, 0, 0};
   glfwGetFramebufferSize(window_, &viewport.width, &viewport.height);
+  glfwMakeContextCurrent(window_);
+
+  // Reset the buffer
+  mjr_setBuffer(mjFB_WINDOW, &mjr_con_);
 
   // update scene and render
   mjv_updateScene(mj_model_, mj_data_, &mjv_opt_, NULL, &mjv_cam_, mjCAT_ALL, &mjv_scn_);
@@ -101,11 +116,35 @@ void MujocoRendering::update()
   glfwPollEvents();
 }
 
+void MujocoRendering::update_cameras()
+{
+  // Rendering is done offscreen
+  mjr_setBuffer(mjFB_OFFSCREEN, &mjr_con_);
+
+  for (auto& camera : cameras_)
+  {
+    // Render simple RGB data for all cameras
+    mjv_updateScene(mj_model_, mj_data_, &mjv_opt_, NULL, &camera.mjv_cam, mjCAT_ALL, &mjv_scn_);
+    mjr_render(camera.viewport, &mjv_scn_, &mjr_con_);
+
+    // Copy image into the ROS message
+    mjr_readPixels(camera.image.data.data(), nullptr, camera.viewport, &mjr_con_);
+
+    // Publish
+    auto time = node_->now();
+    camera.image.header.stamp = time;
+    camera.camera_info.header.stamp = time;
+    camera.image_pub->publish(camera.image);
+    camera.camera_info_pub->publish(camera.camera_info);
+  }
+}
+
 void MujocoRendering::close()
 {
   // free visualization storage
   mjv_freeScene(&mjv_scn_);
   mjr_freeContext(&mjr_con_);
+  glfwDestroyWindow(window_);
 
   // terminate GLFW (crashes with Linux NVidia drivers)
 #if defined(__APPLE__) || defined(_WIN32)
@@ -134,8 +173,7 @@ void MujocoRendering::scroll_callback(GLFWwindow *window, double xoffset, double
   get_instance()->scroll_callback_impl(window, xoffset, yoffset);
 }
 
-void MujocoRendering::keyboard_callback_impl(
-  GLFWwindow *window, int key, int scancode, int act, int mods)
+void MujocoRendering::keyboard_callback_impl(GLFWwindow* /* window */, int key, int /* scancode */, int act, int /* mods */)
 {
   // backspace: reset simulation
   if (act == GLFW_PRESS && key == GLFW_KEY_BACKSPACE)
@@ -145,7 +183,7 @@ void MujocoRendering::keyboard_callback_impl(
   }
 }
 
-void MujocoRendering::mouse_button_callback_impl(GLFWwindow *window, int button, int act, int mods)
+void MujocoRendering::mouse_button_callback_impl(GLFWwindow* window, int /* button */, int /* act */, int /* mods */)
 {
   // update button state
   button_left_ = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
@@ -198,9 +236,78 @@ void MujocoRendering::mouse_move_callback_impl(GLFWwindow *window, double xpos, 
   mjv_moveCamera(mj_model_, action, dx / height, dy / height, &mjv_scn_, &mjv_cam_);
 }
 
-void MujocoRendering::scroll_callback_impl(GLFWwindow *window, double xoffset, double yoffset)
+void MujocoRendering::scroll_callback_impl(GLFWwindow* /* window */, double /* xoffset */, double yoffset)
 {
   // emulate vertical mouse motion = 5% of window height
   mjv_moveCamera(mj_model_, mjMOUSE_ZOOM, 0, -0.05 * yoffset, &mjv_scn_, &mjv_cam_);
 }
-}  // namespace mujoco_ros2_control
+
+void MujocoRendering::register_cameras()
+{
+  cameras_.resize(0);
+  for (auto i = 0; i < mj_model_->ncam; ++i)
+  {
+    const char * cam_name = mj_model_->names + mj_model_->name_camadr[i];
+    const int * cam_resolution = mj_model_->cam_resolution + 2 * i;
+    const float * cam_intrinsic = mj_model_->cam_intrinsic + 4 * i;
+
+    auto fx = static_cast<double>(cam_intrinsic[0]);
+    auto fy = static_cast<double>(cam_intrinsic[1]);
+    auto cx = static_cast<double>(cam_intrinsic[2]);
+    auto cy = static_cast<double>(cam_intrinsic[3]);
+
+    // Construct CameraData wrapper and set defaults
+    CameraData camera;
+    camera.name = cam_name;
+    camera.mjv_cam.type = mjCAMERA_FIXED;
+    camera.mjv_cam.fixedcamid = i;
+    camera.width = static_cast<uint32_t>(cam_resolution[0]);
+    camera.height = static_cast<uint32_t>(cam_resolution[1]);
+    camera.viewport = { 0, 0, cam_resolution[0], cam_resolution[1] };
+
+    // TODO: Ensure that the camera is attached to the expected pose. For now assume that's the case.
+    camera.frame_name = camera.name + "_optical_frame";
+    camera.image.header.frame_id = camera.frame_name;
+    camera.camera_info.header.frame_id = camera.frame_name;
+
+    // Configure publishers
+    camera.image_pub = node_->create_publisher<sensor_msgs::msg::Image>(camera.name + "/color", 10);
+    camera.camera_info_pub = node_->create_publisher<sensor_msgs::msg::CameraInfo>(camera.name + "/camera_info", 10);
+
+    // Set defaults for the image and camera_info, hardcoding for now
+    camera.image.data.resize(camera.width * camera.height * 3);
+    camera.image.width = camera.width;
+    camera.image.height = camera.height;
+    camera.image.step = camera.width * 3;
+
+    camera.camera_info.width = camera.width;
+    camera.camera_info.height = camera.height;
+    camera.image.encoding = sensor_msgs::image_encodings::RGB8;
+    camera.camera_info.distortion_model = "plumb_bob";
+    camera.camera_info.d.resize(5, 0.0);
+
+    camera.camera_info.k.fill(0.0);
+    camera.camera_info.k[0] = fx;
+    camera.camera_info.k[2] = cx;
+    camera.camera_info.k[4] = fy;
+    camera.camera_info.k[5] = cy;
+    camera.camera_info.k[8] = 1.0;
+
+    camera.camera_info.p.fill(0.0);
+    camera.camera_info.p[0]  = fx;
+    camera.camera_info.p[2]  = cx;
+    camera.camera_info.p[5]  = fy;
+    camera.camera_info.p[6]  = cy;
+    camera.camera_info.p[10] = 1.0;
+
+    camera.camera_info.r.fill(0.0);
+    camera.camera_info.r[0] = 1.0;
+    camera.camera_info.r[4] = 1.0;
+    camera.camera_info.r[8] = 1.0;
+
+    // Add to list of cameras
+    cameras_.push_back(camera);
+  }
+}
+
+} // namespace mujoco_ros2_control
