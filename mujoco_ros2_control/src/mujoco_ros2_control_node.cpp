@@ -1,31 +1,58 @@
+// Copyright (c) 2025 Sangtaek Lee
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+// THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
 
-#include "rclcpp/rclcpp.hpp"
 #include "mujoco/mujoco.h"
+#include "rclcpp/rclcpp.hpp"
 
-#include "mujoco_ros2_control/mujoco_ros2_control.hpp"
 #include "mujoco_ros2_control/mujoco_rendering.hpp"
+#include "mujoco_ros2_control/mujoco_ros2_control.hpp"
 
 // MuJoCo data structures
-mjModel* mujoco_model = nullptr;
-mjData* mujoco_data = nullptr;
+mjModel *mujoco_model = nullptr;
+mjData *mujoco_data = nullptr;
 
 // main function
-int main(int argc, const char** argv) {
-
+int main(int argc, const char **argv)
+{
   rclcpp::init(argc, argv);
-  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("mujoco_ros2_control_node", rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
+  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared(
+    "mujoco_ros2_control_node",
+    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
 
   RCLCPP_INFO_STREAM(node->get_logger(), "Initializing mujoco_ros2_control node...");
   auto model_path = node->get_parameter("mujoco_model_path").as_string();
 
   // load and compile model
   char error[1000] = "Could not load binary model";
-  if (std::strlen(model_path.c_str())>4 && !std::strcmp(model_path.c_str()+std::strlen(model_path.c_str())-4, ".mjb")) {
+  if (
+    std::strlen(model_path.c_str()) > 4 &&
+    !std::strcmp(model_path.c_str() + std::strlen(model_path.c_str()) - 4, ".mjb"))
+  {
     mujoco_model = mj_loadModel(model_path.c_str(), 0);
-  } else {
+  }
+  else
+  {
     mujoco_model = mj_loadXML(model_path.c_str(), 0, error, 1000);
   }
-  if (!mujoco_model) {
+  if (!mujoco_model)
+  {
     mju_error("Load model error: %s", error);
   }
 
@@ -36,7 +63,8 @@ int main(int argc, const char** argv) {
   // initialize mujoco control
   auto control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
   control.init();
-  RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
+  RCLCPP_INFO_STREAM(
+    node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
 
   // initialize mujoco redering
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
@@ -44,13 +72,15 @@ int main(int argc, const char** argv) {
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
   // run main loop, target real-time simulation and 60 fps rendering
-  while (rclcpp::ok() && !rendering->is_close_flag_raised()) {
+  while (rclcpp::ok() && !rendering->is_close_flag_raised())
+  {
     // advance interactive simulation for 1/60 sec
     //  Assuming MuJoCo can simulate faster than real-time, which it usually can,
     //  this loop will finish on time for the next frame to be rendered at 60 fps.
     //  Otherwise add a cpu timer and exit this loop when it is time to render.
     mjtNum simstart = mujoco_data->time;
-    while (mujoco_data->time - simstart < 1.0/60.0) {
+    while (mujoco_data->time - simstart < 1.0 / 60.0)
+    {
       control.update();
     }
     rendering->update();

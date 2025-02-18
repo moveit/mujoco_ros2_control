@@ -41,7 +41,7 @@ if(mujoco_FOUND)
   message(STATUS "Mujoco build from source has been found")
   set(MUJOCO_LIB mujoco::mujoco)
   set(MUJOCO_INCLUDE_DIR ${MUJOCO_INCLUDE_DIR})
-elseif (DEFINED ENV{MUJOCO_DIR})
+elseif(DEFINED ENV{MUJOCO_DIR})
   message(STATUS "Mujoco build from source has not been found. Attempting to find the binary in $ENV{MUJOCO_DIR} instead.")
   find_library(MUJOCO_LIB mujoco HINTS $ENV{MUJOCO_DIR}/lib)
   if(NOT MUJOCO_LIB)
@@ -49,8 +49,9 @@ elseif (DEFINED ENV{MUJOCO_DIR})
   endif()
   set(MUJOCO_INCLUDE_DIR $ENV{MUJOCO_DIR}/include)
 else()
-  message(FATAL_ERROR "Failed to find mujoco with find_package. Either build and install mujoco from source or set the MUJOCO_DIR environment variable to tell CMake where to find the binary install. ")
-endif (mujoco_FOUND)
+  message(FATAL_ERROR "Failed to find mujoco with find_package.
+  Either build and install mujoco from source or set the MUJOCO_DIR environment variable to tell CMake where to find the binary install. ")
+endif()
 
 add_library(mujoco_system_plugins SHARED src/mujoco_system.cpp)
 ament_target_dependencies(mujoco_system_plugins ${THIS_PACKAGE_DEPENDS})
@@ -83,12 +84,6 @@ target_include_directories(mujoco_ros2_control
 install(TARGETS
   mujoco_ros2_control
   DESTINATION lib/${PROJECT_NAME})
-
-if(BUILD_TESTING)
-  set(ament_cmake_clang_format_CONFIG_FILE "${CMAKE_SOURCE_DIR}/../.clang-format")
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
 
 pluginlib_export_plugin_description_file(mujoco_ros2_control mujoco_system_plugins.xml)
 ament_package()
