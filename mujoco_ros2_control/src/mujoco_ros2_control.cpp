@@ -128,23 +128,14 @@ void MujocoRos2Control::init()
 
 void MujocoRos2Control::update()
 {
-  rclcpp::Time sim_time_ros;
-  rclcpp::Duration sim_period = rclcpp::Duration::from_seconds(0);
-
-  if (pause_simulation_) {
-    // when paused, use the wall clock
-    sim_time_ros = node_->get_clock()->now();
-    sim_period = control_period_;
-  }
-  else {
   // Get the simulation time and period
-    auto sim_time = mj_data_->time;
-    int sim_time_sec = static_cast<int>(sim_time);
-    int sim_time_nanosec = static_cast<int>((sim_time - sim_time_sec)*1000000000);
-    
-    sim_time_ros = rclcpp::Time(sim_time_sec, sim_time_nanosec, RCL_ROS_TIME);
-    sim_period = sim_time_ros - last_update_sim_time_ros_;
-  }
+  auto sim_time = mj_data_->time;
+  int sim_time_sec = static_cast<int>(sim_time);
+  int sim_time_nanosec = static_cast<int>((sim_time - sim_time_sec)*1000000000);
+
+  rclcpp::Time sim_time_ros(sim_time_sec, sim_time_nanosec, RCL_ROS_TIME);
+  rclcpp::Duration sim_period = sim_time_ros - last_update_sim_time_ros_;
+
   publish_sim_time(sim_time_ros);
   
   if (!pause_simulation_) {
