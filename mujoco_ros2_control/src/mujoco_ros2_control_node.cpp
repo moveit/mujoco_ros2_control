@@ -17,6 +17,9 @@ int main(int argc, const char** argv) {
 
   RCLCPP_INFO_STREAM(node->get_logger(), "Initializing mujoco_ros2_control node...");
   auto model_path = node->get_parameter("mujoco_model_path").as_string();
+  bool pause_sim = node->has_parameter("pause_simulation")
+                      ? node->get_parameter("pause_simulation").as_bool()
+                      : node->declare_parameter("pause_simulation", false);
 
   // load and compile model
   char error[1000] = "Could not load binary model";
@@ -34,13 +37,19 @@ int main(int argc, const char** argv) {
   mujoco_data = mj_makeData(mujoco_model);
 
   // initialize mujoco control
-  auto control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
-  control.init();
+  auto control = std::make_shared<mujoco_ros2_control::MujocoRos2Control>(node, mujoco_model, mujoco_data);
+  control->init();
+  control->set_pause_simulation(pause_sim);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
 
-  // initialize mujoco redering
+  // if paused from start, step before rendering
+  if (control->is_paused()) {
+    control->step_once();
+  }
+
+  // initialize mujoco rendering
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
-  rendering->init(node, mujoco_model, mujoco_data);
+  rendering->init(node, control, mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
   // run main loop, target real-time simulation and 60 fps rendering
@@ -49,9 +58,19 @@ int main(int argc, const char** argv) {
     //  Assuming MuJoCo can simulate faster than real-time, which it usually can,
     //  this loop will finish on time for the next frame to be rendered at 60 fps.
     //  Otherwise add a cpu timer and exit this loop when it is time to render.
-    mjtNum simstart = mujoco_data->time;
-    while (mujoco_data->time - simstart < 1.0/60.0) {
-      control.update();
+    
+    if (control->is_paused()) {
+      // use wall-clock time
+      auto start_wall = std::chrono::steady_clock::now();
+      while (std::chrono::steady_clock::now() - start_wall < std::chrono::duration<double>(1.0 / 60.0)) {
+        control->update();
+      }
+    } else {
+      // simulation time
+      mjtNum simstart = mujoco_data->time;
+      while (mujoco_data->time - simstart < 1.0 / 60.0) {
+        control->update();
+      }
     }
     rendering->update();
   }

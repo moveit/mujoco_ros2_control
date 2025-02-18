@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "mujoco/mujoco.h"
 #include "GLFW/glfw3.h"
+#include "mujoco_ros2_control/mujoco_ros2_control.hpp"
 
 namespace mujoco_ros2_control
 {
@@ -14,7 +15,7 @@ public:
   void operator=(const MujocoRendering &) = delete;
 
   static MujocoRendering* get_instance();
-  void init(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data);
+  void init(rclcpp::Node::SharedPtr & node, std::shared_ptr<MujocoRos2Control> & control, mjModel* mujoco_model, mjData* mujoco_data);
   bool is_close_flag_raised();
   void update();
   void close();
@@ -32,6 +33,7 @@ private:
 
   static MujocoRendering* instance_;
   rclcpp::Node::SharedPtr node_;  // TODO: delete node and add logger
+  std::shared_ptr<MujocoRos2Control> control_;
   mjModel* mj_model_;
   mjData* mj_data_;
   mjvCamera mjv_cam_;

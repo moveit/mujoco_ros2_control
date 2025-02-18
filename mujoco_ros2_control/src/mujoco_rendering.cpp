@@ -21,9 +21,12 @@ MujocoRendering::MujocoRendering()
 {
 }
 
-void MujocoRendering::init(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data)
+void MujocoRendering::init(rclcpp::Node::SharedPtr & node,
+                           std::shared_ptr<MujocoRos2Control> & control,
+                           mjModel* mujoco_model, mjData* mujoco_data)
 {
   node_ = node;
+  control_ = control;
   mj_model_ = mujoco_model;
   mj_data_ = mujoco_data;
 
@@ -116,6 +119,12 @@ void MujocoRendering::keyboard_callback_impl(GLFWwindow* window, int key, int sc
   if (act==GLFW_PRESS && key==GLFW_KEY_BACKSPACE) {
     mj_resetData(mj_model_, mj_data_);
     mj_forward(mj_model_, mj_data_);
+  }
+  // space: pause/unpause simulation
+  if (act == GLFW_PRESS && key == GLFW_KEY_SPACE) {
+    if (control_) {
+      control_->set_pause_simulation(!control_->is_paused());
+    }
   }
 }
 
