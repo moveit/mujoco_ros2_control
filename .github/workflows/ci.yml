@@ -4,6 +4,8 @@ on:
   pull_request:
   merge_group:
   push:
+    # branches:
+    #   - main
 
 jobs:
   pre-commit:
@@ -13,16 +15,34 @@ jobs:
     steps:
     - name: Checkout code from current branch
       uses: actions/checkout@v4
-    #   with:
-    #     ref: ${{ github.event.pull_request.head.sha }}
-
-    - name: Install pre-commit dependencies
+    - name: Prepare environment for pre-commit
       run: |
         apt-get update
-        apt-get install -y ros-humble-ament*
-
+        apt-get install -y git ros-humble-ament*
+        git init .
+        git config --global --add safe.directory '*'
     - name: Setup Python
       uses: actions/setup-python@v5
-
+      with:
+        python-version: '3.8'
     - name: Run pre-commit
       uses: pre-commit/action@v3.0.1
+
+  build_and_test:
+    runs-on: ubuntu-latest
+    container:
+      image: ros:humble-ros-core
+    steps:
+    - name: Checkout code from current branch
+      uses: actions/checkout@v4
+    - name: Prepare environment for build and test
+      run: |
+        apt-get update
+        rosdep update --rosdistro=humble
+        rosdep install --from-paths . --ignore-src -y
+    - name: Build
+      run: |
+        colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+    - name: Test
+      run: |
+        colcon test --merge-install
