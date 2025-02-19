@@ -4,25 +4,29 @@ on:
   pull_request:
   merge_group:
   push:
+    # branches:
+    #   - main
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
-    container:
-      image: ros:humble-ros-core
+    # container:
+    #   image: ros:humble-ros-core
     steps:
     - name: Checkout code from current branch
       uses: actions/checkout@v4
-    #   with:
-    #     ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Install pre-commit dependencies
       run: |
         apt-get update
-        apt-get install -y ros-humble-ament*
+        apt-get install -y ros-humble-ament* git
+        # git init .
+        # git config --global --add safe.directory '*'
 
     - name: Setup Python
       uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
 
     - name: Run pre-commit
       uses: pre-commit/action@v3.0.1
