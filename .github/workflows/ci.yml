@@ -4,21 +4,25 @@ on:
   pull_request:
   merge_group:
   push:
-    branches:
-      - main
 
 jobs:
-  Explore-GitHub-Actions:
+  pre-commit:
     runs-on: ubuntu-latest
+    container:
+      image: ros:humble-ros-core
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
-        uses: actions/checkout@v4
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+    - name: Checkout code from current branch
+      uses: actions/checkout@v4
+    #   with:
+    #     ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Install pre-commit dependencies
+      run: |
+        apt-get update
+        apt-get install -y ros-humble-ament*
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+
+    - name: Run pre-commit
+      uses: pre-commit/action@v3.0.1
