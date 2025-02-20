@@ -29,6 +29,7 @@ jobs:
       uses: pre-commit/action@v3.0.1
 
   build_and_test:
+    needs: pre-commit
     runs-on: ubuntu-latest
     container:
       image: ros:humble-ros-core
@@ -38,6 +39,8 @@ jobs:
     - name: Prepare environment for build and test
       run: |
         apt-get update
+        apt-get install -y python3-rosdep
+        rosdep init
         rosdep update --rosdistro=humble
         rosdep install --from-paths . --ignore-src -y
     - name: Build
