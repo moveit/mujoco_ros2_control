@@ -7,45 +7,60 @@ on:
     # branches:
     #   - main
 
+env:
+  ROS_DISTRO: humble
+  MUJOCO_VERSION: 3.2.7
+  MUJOCO_DIR: "/opt/mujoco/mujoco"
+  CPU_ARCH: $(uname -m)
+
 jobs:
   pre-commit:
-    runs-on: ubuntu-latest
-    container:
-      image: ros:humble-ros-core
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout code from current branch
       uses: actions/checkout@v4
-    - name: Prepare environment for pre-commit
+    - name: Setup ROS
+      uses: ros-tooling/setup-ros@v0.7
+    - name: Install dependencies
       run: |
-        apt-get update
-        apt-get install -y git ros-humble-ament*
-        git init .
-        git config --global --add safe.directory '*'
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.8'
+        sudo apt-get update
+        sudo rosdep update --rosdistro ${{ env.ROS_DISTRO }}
+        sudo rosdep install --from-paths . --ignore-src -y -t test --rosdistro ${{ env.ROS_DISTRO }}
     - name: Run pre-commit
-      uses: pre-commit/action@v3.0.1
+      run: |
+        pip3 install pre-commit
+        source /opt/ros/${{ env.ROS_DISTRO }}/setup.bash
+        pre-commit run --all-files
 
   build_and_test:
     needs: pre-commit
-    runs-on: ubuntu-latest
-    container:
-      image: ros:humble-ros-core
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout code from current branch
       uses: actions/checkout@v4
-    - name: Prepare environment for build and test
+    - name: Setup ROS
+      uses: ros-tooling/setup-ros@v0.7
+    - name: Install dependencies
       run: |
         apt-get update
-        apt-get install -y python3-rosdep
-        rosdep init
-        rosdep update --rosdistro=humble
-        rosdep install --from-paths . --ignore-src -y
+        apt-get install -y libglfw3-dev
+        rosdep update --rosdistro ${{ env.ROS_DISTRO }}
+        rosdep install --from-paths . --ignore-src -y --rosdistro ${{ env.ROS_DISTRO }}
+    - name: Install MuJoCo
+      run: |
+        mkdir -p ${{ env.MUJOCO_DIR }}
+        wget https://github.com/google-deepmind/mujoco/releases/download/${{ env.MUJOCO_VERSION }}/mujoco-${{ env.MUJOCO_VERSION }}-linux-${{ env.CPU_ARCH }}.tar.gz
+        tar -xzf "mujoco-${{ env.MUJOCO_VERSION }}-linux-${{ env.CPU_ARCH }}.tar.gz" -C $(dirname "${{ env.MUJOCO_DIR }}")
+      env:
+        MUJOCO_DIR: ${{ env.MUJOCO_DIR }}-${{ env.MUJOCO_VERSION }}
     - name: Build
       run: |
+        source /opt/ros/${{ env.ROS_DISTRO }}/setup.bash
         colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+      env:
+        MUJOCO_DIR: ${{ env.MUJOCO_DIR }}-${{ env.MUJOCO_VERSION }}
     - name: Test
       run: |
+        source /opt/ros/${{ env.ROS_DISTRO }}/setup.bash
+        source install/setup.bash
         colcon test --merge-install
