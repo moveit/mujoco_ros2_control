@@ -1,4 +1,5 @@
 # Contributing to mujoco_ros2_control
+
 Thank you for considering contributing to our project! We welcome contributions in all forms, from bug fixes and documentation improvements to new features. Please read our guidelines carefully and ensure you follow contribution guidelines throughout your participation.
 
 ## How to Contribute
@@ -12,6 +13,7 @@ Thank you for considering contributing to our project! We welcome contributions 
 ### 2. Submitting Pull Requests
 
 When you're ready to contribute code or documentation, please follow these steps:
+
 - Click the "Fork" button at the top right of the repository page to create your own copy.
 - Clone your forked repository.
 - Create a feature branch.
@@ -22,6 +24,7 @@ When you're ready to contribute code or documentation, please follow these steps
 # Run Unit/Integration Tests
 colcon test
 ```
+
 ```bash
 # Run Pre-Commit Hooks
 pre-commit run -a
@@ -31,10 +34,11 @@ pre-commit run -a
 - Open a pull request
 
 ## License
+
 Any contribution that you make to this repository will
 be under the MIT license, as dictated by that
 [license](https://opensource.org/licenses/MIT).
 
-## Thank You!
+## Thank You
 
 We appreciate your time and effort in contributing to our project.
