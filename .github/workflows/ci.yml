@@ -4,8 +4,8 @@ on:
   pull_request:
   merge_group:
   push:
-    # branches:
-    #   - main
+    branches:
+      - main
 
 env:
   ROS_DISTRO: humble
