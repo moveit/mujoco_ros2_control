@@ -45,16 +45,38 @@ MujocoRos2Control::~MujocoRos2Control()
   cm_thread_.join();
 }
 
-void MujocoRos2Control::init()
+void MujocoRos2Control::init(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> executor)
 {
+  cm_executor_ = executor;
+  cm_executor_->add_node(node_);
+
+  // Getting robot description from topic
+  std::string urdf_string;
+  bool robot_description_received = false;
+  auto robot_description_sub = node_->create_subscription<std_msgs::msg::String>(
+    "robot_description", rclcpp::QoS(1).transient_local(),
+    [&](const std_msgs::msg::String::SharedPtr msg)
+    {
+      if (!msg->data.empty() && robot_description_received == false)
+      {
+        robot_description_received = true;
+        urdf_string = msg->data;
+      }
+    });
+
+  while (robot_description_received == false && rclcpp::ok())
+  {
+    cm_executor_->spin_once();
+    RCLCPP_INFO(node_->get_logger(), "Waiting for robot description message");
+    rclcpp::sleep_for(std::chrono::milliseconds(500));
+  }
+
   clock_publisher_ = node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
   // Read urdf from ros parameter server then
   // setup actuators and mechanism control node.
-  std::string urdf_string;
   std::vector<hardware_interface::HardwareInfo> control_hardware_info;
   try
   {
-    urdf_string = node_->get_parameter("robot_description").as_string();
     control_hardware_info = hardware_interface::parse_control_resources_from_urdf(urdf_string);
   }
   catch (const std::runtime_error &ex)
@@ -119,7 +141,6 @@ void MujocoRos2Control::init()
 
   // Create the controller manager
   RCLCPP_INFO(logger_, "Loading controller_manager");
-  cm_executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   controller_manager_ = std::make_shared<controller_manager::ControllerManager>(
     std::move(resource_manager), cm_executor_, "controller_manager", node_->get_namespace());
 
@@ -140,13 +161,7 @@ void MujocoRos2Control::init()
     rclcpp::Parameter("use_sim_time", rclcpp::ParameterValue(true)));
 
   stop_cm_thread_ = false;
-  auto spin = [this]()
-  {
-    while (rclcpp::ok() && !stop_cm_thread_)
-    {
-      cm_executor_->spin_once();
-    }
-  };
+  auto spin = [this]() { cm_executor_->spin(); };
   cm_thread_ = std::thread(spin);
 }
 

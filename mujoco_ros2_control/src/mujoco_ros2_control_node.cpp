@@ -61,8 +61,11 @@ int main(int argc, const char **argv)
   mujoco_data = mj_makeData(mujoco_model);
 
   // initialize mujoco control
-  auto control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
-  control.init();
+  auto mujoco_control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
+
+  auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+
+  mujoco_control.init(executor);
   RCLCPP_INFO_STREAM(
     node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
 
@@ -81,7 +84,7 @@ int main(int argc, const char **argv)
     mjtNum simstart = mujoco_data->time;
     while (mujoco_data->time - simstart < 1.0 / 60.0)
     {
-      control.update();
+      mujoco_control.update();
     }
     rendering->update();
   }
