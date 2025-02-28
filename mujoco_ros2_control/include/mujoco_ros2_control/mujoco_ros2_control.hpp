@@ -39,7 +39,7 @@ class MujocoRos2Control
 public:
   MujocoRos2Control(rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data);
   ~MujocoRos2Control();
-  void init();
+  void init(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> executor);
   void update();
 
 private:
