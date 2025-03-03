@@ -47,11 +47,15 @@ struct CameraData
   uint32_t height;
 
   std::vector<uint8_t> image_buffer;
+  std::vector<float> depth_buffer;
+  std::vector<float> depth_buffer_flipped;
 
   sensor_msgs::msg::Image image;
+  sensor_msgs::msg::Image depth_image;
   sensor_msgs::msg::CameraInfo camera_info;
 
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr depth_image_pub;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_pub;
 };
 
