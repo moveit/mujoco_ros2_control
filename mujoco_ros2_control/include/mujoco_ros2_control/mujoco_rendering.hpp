@@ -34,7 +34,7 @@ public:
   void operator=(const MujocoRendering &) = delete;
 
   static MujocoRendering *get_instance();
-  void init(rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data);
+  void init(mjModel *mujoco_model, mjData *mujoco_data);
   bool is_close_flag_raised();
   void update();
   void close();
@@ -51,7 +51,6 @@ private:
   void scroll_callback_impl(GLFWwindow *window, double xoffset, double yoffset);
 
   static MujocoRendering *instance_;
-  rclcpp::Node::SharedPtr node_;  // TODO(sangtaek): delete node and add logger
   mjModel *mj_model_;
   mjData *mj_data_;
   mjvCamera mjv_cam_;
