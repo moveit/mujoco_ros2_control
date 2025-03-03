@@ -1,0 +1,14 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+
+    position_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    position_controller:
+      type: position_controllers/JointGroupPositionController
+
+position_controller:
+  ros__parameters:
+    joints:
+      - camera_joint
