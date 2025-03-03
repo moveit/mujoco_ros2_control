@@ -121,7 +121,7 @@ void MujocoRendering::update_cameras()
   // Rendering is done offscreen
   mjr_setBuffer(mjFB_OFFSCREEN, &mjr_con_);
 
-  for (auto& camera : cameras_)
+  for (auto &camera : cameras_)
   {
     // Render simple RGB data for all cameras
     mjv_updateScene(mj_model_, mj_data_, &mjv_opt_, NULL, &camera.mjv_cam, mjCAT_ALL, &mjv_scn_);
@@ -173,7 +173,8 @@ void MujocoRendering::scroll_callback(GLFWwindow *window, double xoffset, double
   get_instance()->scroll_callback_impl(window, xoffset, yoffset);
 }
 
-void MujocoRendering::keyboard_callback_impl(GLFWwindow* /* window */, int key, int /* scancode */, int act, int /* mods */)
+void MujocoRendering::keyboard_callback_impl(
+  GLFWwindow * /* window */, int key, int /* scancode */, int act, int /* mods */)
 {
   // backspace: reset simulation
   if (act == GLFW_PRESS && key == GLFW_KEY_BACKSPACE)
@@ -183,7 +184,8 @@ void MujocoRendering::keyboard_callback_impl(GLFWwindow* /* window */, int key, 
   }
 }
 
-void MujocoRendering::mouse_button_callback_impl(GLFWwindow* window, int /* button */, int /* act */, int /* mods */)
+void MujocoRendering::mouse_button_callback_impl(
+  GLFWwindow *window, int /* button */, int /* act */, int /* mods */)
 {
   // update button state
   button_left_ = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
@@ -236,7 +238,8 @@ void MujocoRendering::mouse_move_callback_impl(GLFWwindow *window, double xpos, 
   mjv_moveCamera(mj_model_, action, dx / height, dy / height, &mjv_scn_, &mjv_cam_);
 }
 
-void MujocoRendering::scroll_callback_impl(GLFWwindow* /* window */, double /* xoffset */, double yoffset)
+void MujocoRendering::scroll_callback_impl(
+  GLFWwindow * /* window */, double /* xoffset */, double yoffset)
 {
   // emulate vertical mouse motion = 5% of window height
   mjv_moveCamera(mj_model_, mjMOUSE_ZOOM, 0, -0.05 * yoffset, &mjv_scn_, &mjv_cam_);
@@ -247,9 +250,9 @@ void MujocoRendering::register_cameras()
   cameras_.resize(0);
   for (auto i = 0; i < mj_model_->ncam; ++i)
   {
-    const char * cam_name = mj_model_->names + mj_model_->name_camadr[i];
-    const int * cam_resolution = mj_model_->cam_resolution + 2 * i;
-    const float * cam_intrinsic = mj_model_->cam_intrinsic + 4 * i;
+    const char *cam_name = mj_model_->names + mj_model_->name_camadr[i];
+    const int *cam_resolution = mj_model_->cam_resolution + 2 * i;
+    const float *cam_intrinsic = mj_model_->cam_intrinsic + 4 * i;
 
     auto fx = static_cast<double>(cam_intrinsic[0]);
     auto fy = static_cast<double>(cam_intrinsic[1]);
@@ -263,16 +266,18 @@ void MujocoRendering::register_cameras()
     camera.mjv_cam.fixedcamid = i;
     camera.width = static_cast<uint32_t>(cam_resolution[0]);
     camera.height = static_cast<uint32_t>(cam_resolution[1]);
-    camera.viewport = { 0, 0, cam_resolution[0], cam_resolution[1] };
+    camera.viewport = {0, 0, cam_resolution[0], cam_resolution[1]};
 
-    // TODO: Ensure that the camera is attached to the expected pose. For now assume that's the case.
+    // TODO(eholum): Ensure that the camera is attached to the expected pose.
+    // For now assume that's the case.
     camera.frame_name = camera.name + "_optical_frame";
     camera.image.header.frame_id = camera.frame_name;
     camera.camera_info.header.frame_id = camera.frame_name;
 
     // Configure publishers
     camera.image_pub = node_->create_publisher<sensor_msgs::msg::Image>(camera.name + "/color", 10);
-    camera.camera_info_pub = node_->create_publisher<sensor_msgs::msg::CameraInfo>(camera.name + "/camera_info", 10);
+    camera.camera_info_pub =
+      node_->create_publisher<sensor_msgs::msg::CameraInfo>(camera.name + "/camera_info", 10);
 
     // Set defaults for the image and camera_info, hardcoding for now
     camera.image.data.resize(camera.width * camera.height * 3);
@@ -294,10 +299,10 @@ void MujocoRendering::register_cameras()
     camera.camera_info.k[8] = 1.0;
 
     camera.camera_info.p.fill(0.0);
-    camera.camera_info.p[0]  = fx;
-    camera.camera_info.p[2]  = cx;
-    camera.camera_info.p[5]  = fy;
-    camera.camera_info.p[6]  = cy;
+    camera.camera_info.p[0] = fx;
+    camera.camera_info.p[2] = cx;
+    camera.camera_info.p[5] = fy;
+    camera.camera_info.p[6] = cy;
     camera.camera_info.p[10] = 1.0;
 
     camera.camera_info.r.fill(0.0);
@@ -310,4 +315,4 @@ void MujocoRendering::register_cameras()
   }
 }
 
-} // namespace mujoco_ros2_control
+}  // namespace mujoco_ros2_control

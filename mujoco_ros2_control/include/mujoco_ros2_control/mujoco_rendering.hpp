@@ -67,7 +67,6 @@ public:
   void close();
 
 private:
-
   MujocoRendering();
   static void keyboard_callback(GLFWwindow *window, int key, int scancode, int act, int mods);
   static void mouse_button_callback(GLFWwindow *window, int button, int act, int mods);
@@ -81,14 +80,14 @@ private:
 
   void register_cameras();
 
-  static MujocoRendering* instance_;
+  static MujocoRendering *instance_;
   rclcpp::Node::SharedPtr node_;
 
-  mjModel* mj_model_;
-  mjData* mj_data_;
+  mjModel *mj_model_;
+  mjData *mj_data_;
 
   // Window and primary camera for the simulation's viewer
-  GLFWwindow* window_;
+  GLFWwindow *window_;
   mjvCamera mjv_cam_;
 
   // Options for the rendering context and scene, all of these are hard coded to defaults.
