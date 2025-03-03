@@ -127,8 +127,17 @@ void MujocoRendering::update_cameras()
     mjv_updateScene(mj_model_, mj_data_, &mjv_opt_, NULL, &camera.mjv_cam, mjCAT_ALL, &mjv_scn_);
     mjr_render(camera.viewport, &mjv_scn_, &mjr_con_);
 
-    // Copy image into the ROS message
-    mjr_readPixels(camera.image.data.data(), nullptr, camera.viewport, &mjr_con_);
+    // Copy image into relevant buffers
+    mjr_readPixels(camera.image_buffer.data(), nullptr, camera.viewport, &mjr_con_);
+
+    // OpenGL's coordinate system's origin is in the bottom left, so we invert the image row-by-row
+    auto row_size = camera.width * 3;
+    for (uint32_t h = 0; h < camera.height; h++)
+    {
+      auto src_idx = h * row_size;
+      auto dest_idx = (camera.height - 1 - h) * row_size;
+      std::memcpy(&camera.image.data[src_idx], &camera.image_buffer[dest_idx], row_size);
+    }
 
     // Publish
     auto time = node_->now();
@@ -279,8 +288,12 @@ void MujocoRendering::register_cameras()
     camera.camera_info_pub =
       node_->create_publisher<sensor_msgs::msg::CameraInfo>(camera.name + "/camera_info", 10);
 
+    // Allocate space for image data
+    const auto image_size = camera.width * camera.height * 3;
+    camera.image_buffer.resize(image_size);
+
     // Set defaults for the image and camera_info, hardcoding for now
-    camera.image.data.resize(camera.width * camera.height * 3);
+    camera.image.data.resize(image_size);
     camera.image.width = camera.width;
     camera.image.height = camera.height;
     camera.image.step = camera.width * 3;
