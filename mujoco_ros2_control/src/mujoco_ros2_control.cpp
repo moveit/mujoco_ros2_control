@@ -26,12 +26,10 @@
 
 namespace mujoco_ros2_control
 {
-MujocoRos2Control::MujocoRos2Control(
-  rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data)
-    : node_(node),
-      mj_model_(mujoco_model),
+MujocoRos2Control::MujocoRos2Control(mjModel *mujoco_model, mjData *mujoco_data)
+    : mj_model_(mujoco_model),
       mj_data_(mujoco_data),
-      logger_(rclcpp::get_logger(node_->get_name() + std::string(".mujoco_ros2_control"))),
+      logger_(rclcpp::get_logger("mujoco_ros2_control")),
       control_period_(rclcpp::Duration(1, 0)),
       last_update_sim_time_ros_(0, 0, RCL_ROS_TIME)
 {
@@ -42,36 +40,48 @@ MujocoRos2Control::~MujocoRos2Control()
   stop_cm_thread_ = true;
   cm_executor_->remove_node(controller_manager_);
   cm_executor_->cancel();
-  cm_thread_.join();
 }
 
-void MujocoRos2Control::init(std::shared_ptr<rclcpp::executors::MultiThreadedExecutor> executor)
+std::string MujocoRos2Control::get_robot_description()
 {
-  cm_executor_ = executor;
-  cm_executor_->add_node(node_);
+  // Getting robot description from parameter first. If not set trying from topic
+  std::string robot_description;
 
-  // Getting robot description from topic
-  std::string urdf_string;
-  bool robot_description_received = false;
-  auto robot_description_sub = node_->create_subscription<std_msgs::msg::String>(
+  auto node = std::make_shared<rclcpp::Node>("robot_description_node");
+  cm_executor_->add_node(node);
+
+  try
+  {
+    robot_description = node->get_parameter("robot_description").as_string();
+  }
+  catch (rclcpp::exceptions::ParameterNotDeclaredException &e)
+  {
+    RCLCPP_WARN(
+      logger_, "Impossible to get robot_description from parameter. Getting it from topic...");
+  }
+
+  auto robot_description_sub = node->create_subscription<std_msgs::msg::String>(
     "robot_description", rclcpp::QoS(1).transient_local(),
     [&](const std_msgs::msg::String::SharedPtr msg)
     {
-      if (!msg->data.empty() && robot_description_received == false)
-      {
-        robot_description_received = true;
-        urdf_string = msg->data;
-      }
+      if (!msg->data.empty() && robot_description.empty()) robot_description = msg->data;
     });
 
-  while (robot_description_received == false && rclcpp::ok())
+  while (robot_description.empty() && rclcpp::ok())
   {
     cm_executor_->spin_once();
-    RCLCPP_INFO(node_->get_logger(), "Waiting for robot description message");
+    RCLCPP_INFO(node->get_logger(), "Waiting for robot description message");
     rclcpp::sleep_for(std::chrono::milliseconds(500));
   }
 
-  clock_publisher_ = node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
+  return robot_description;
+}
+
+void MujocoRos2Control::init(rclcpp::Executor::SharedPtr executor)
+{
+  cm_executor_ = executor;
+  std::string urdf_string = this->get_robot_description();
+
   // Read urdf from ros parameter server then
   // setup actuators and mechanism control node.
   std::vector<hardware_interface::HardwareInfo> control_hardware_info;
@@ -125,7 +135,7 @@ void MujocoRos2Control::init(std::shared_ptr<rclcpp::executors::MultiThreadedExe
 
     urdf::Model urdf_model;
     urdf_model.initString(urdf_string);
-    if (!mujoco_system->init_sim(node_, mj_model_, mj_data_, urdf_model, hardware))
+    if (!mujoco_system->init_sim(mj_model_, mj_data_, urdf_model, hardware))
     {
       RCLCPP_FATAL(logger_, "Could not initialize robot simulation interface");
       return;
@@ -142,9 +152,11 @@ void MujocoRos2Control::init(std::shared_ptr<rclcpp::executors::MultiThreadedExe
   // Create the controller manager
   RCLCPP_INFO(logger_, "Loading controller_manager");
   controller_manager_ = std::make_shared<controller_manager::ControllerManager>(
-    std::move(resource_manager), cm_executor_, "controller_manager", node_->get_namespace());
+    std::move(resource_manager), cm_executor_, "controller_manager", "");
 
-  cm_executor_->add_node(controller_manager_);
+  cm_executor_->add_node(controller_manager_);  // Useful?
+
+  clock_publisher_ = controller_manager_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
 
   if (!controller_manager_->has_parameter("update_rate"))
   {

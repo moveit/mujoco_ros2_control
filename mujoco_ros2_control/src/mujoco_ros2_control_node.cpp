@@ -61,7 +61,7 @@ int main(int argc, const char **argv)
   mujoco_data = mj_makeData(mujoco_model);
 
   // initialize mujoco control
-  auto mujoco_control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
+  auto mujoco_control = mujoco_ros2_control::MujocoRos2Control(mujoco_model, mujoco_data);
 
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
 
@@ -71,7 +71,7 @@ int main(int argc, const char **argv)
 
   // initialize mujoco redering
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
-  rendering->init(node, mujoco_model, mujoco_data);
+  rendering->init(mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
   // Thread to allow node's spinning
