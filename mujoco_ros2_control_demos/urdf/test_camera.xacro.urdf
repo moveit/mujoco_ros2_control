@@ -14,7 +14,6 @@
       </material>
     </visual>
   </link>
-
   <joint name="red_box_joint" type="fixed">
     <parent link="base_link"/>
     <child link="red_box"/>
@@ -32,7 +31,6 @@
       </material>
     </visual>
   </link>
-
   <joint name="green_sphere_joint" type="fixed">
     <parent link="base_link"/>
     <child link="green_sphere"/>
@@ -47,13 +45,20 @@
       </geometry>
     </visual>
   </link>
-
   <joint name="camera_joint" type="revolute">
     <parent link="base_link"/>
     <child link="camera"/>
-    <origin xyz="0 0 1" rpy="0 0 0"/>
-    <axis xyz="0 1 0"/>
+    <origin xyz="0 0 1" rpy="0 1.5708 1.5708"/>
+    <axis xyz="0 0 1"/>
     <limit lower="-0.5" upper="0.5" effort="1" velocity="1"/>
+  </joint>
+
+  <link name="camera_optical_frame" />
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera"/>
+    <child link="camera_optical_frame"/>
+    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    <axis xyz="0 0 0"/>
   </joint>
 
   <ros2_control name="MujocoSystem" type="system">

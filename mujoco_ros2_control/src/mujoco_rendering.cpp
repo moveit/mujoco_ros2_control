@@ -128,22 +128,45 @@ void MujocoRendering::update_cameras()
     mjr_render(camera.viewport, &mjv_scn_, &mjr_con_);
 
     // Copy image into relevant buffers
-    mjr_readPixels(camera.image_buffer.data(), nullptr, camera.viewport, &mjr_con_);
+    mjr_readPixels(
+      camera.image_buffer.data(), camera.depth_buffer.data(), camera.viewport, &mjr_con_);
 
-    // OpenGL's coordinate system's origin is in the bottom left, so we invert the image row-by-row
+    // Fix non-linear projections in the depth image and flip the data.
+    // https://github.com/google-deepmind/mujoco/blob/3.2.7/python/mujoco/renderer.py#L190
+    float near = static_cast<float>(mj_model_->vis.map.znear * mj_model_->stat.extent);
+    float far = static_cast<float>(mj_model_->vis.map.zfar * mj_model_->stat.extent);
+    for (uint32_t h = 0; h < camera.height; h++)
+    {
+      for (uint32_t w = 0; w < camera.width; w++)
+      {
+        auto idx = h * camera.width + w;
+        auto idx_flipped = (camera.height - 1 - h) * camera.width + w;
+        camera.depth_buffer[idx] = near / (1.0f - camera.depth_buffer[idx] * (1.0f - near / far));
+        camera.depth_buffer_flipped[idx_flipped] = camera.depth_buffer[idx];
+      }
+    }
+    // Copy flipped data into the depth image message, floats -> unsigned chars
+    std::memcpy(
+      &camera.depth_image.data[0], camera.depth_buffer_flipped.data(),
+      camera.depth_image.data.size());
+
+    // OpenGL's coordinate system's origin is in the bottom left, so we invert the images row-by-row
     auto row_size = camera.width * 3;
     for (uint32_t h = 0; h < camera.height; h++)
     {
       auto src_idx = h * row_size;
       auto dest_idx = (camera.height - 1 - h) * row_size;
-      std::memcpy(&camera.image.data[src_idx], &camera.image_buffer[dest_idx], row_size);
+      std::memcpy(&camera.image.data[dest_idx], &camera.image_buffer[src_idx], row_size);
     }
 
-    // Publish
+    // Publish images and camera info
     auto time = node_->now();
     camera.image.header.stamp = time;
+    camera.depth_image.header.stamp = time;
     camera.camera_info.header.stamp = time;
+
     camera.image_pub->publish(camera.image);
+    camera.depth_image_pub->publish(camera.depth_image);
     camera.camera_info_pub->publish(camera.camera_info);
   }
 }
@@ -261,12 +284,7 @@ void MujocoRendering::register_cameras()
   {
     const char *cam_name = mj_model_->names + mj_model_->name_camadr[i];
     const int *cam_resolution = mj_model_->cam_resolution + 2 * i;
-    const float *cam_intrinsic = mj_model_->cam_intrinsic + 4 * i;
-
-    auto fx = static_cast<double>(cam_intrinsic[0]);
-    auto fy = static_cast<double>(cam_intrinsic[1]);
-    auto cx = static_cast<double>(cam_intrinsic[2]);
-    auto cy = static_cast<double>(cam_intrinsic[3]);
+    const mjtNum cam_fovy = mj_model_->cam_fovy[i];
 
     // Construct CameraData wrapper and set defaults
     CameraData camera;
@@ -280,48 +298,51 @@ void MujocoRendering::register_cameras()
     // TODO(eholum): Ensure that the camera is attached to the expected pose.
     // For now assume that's the case.
     camera.frame_name = camera.name + "_optical_frame";
-    camera.image.header.frame_id = camera.frame_name;
-    camera.camera_info.header.frame_id = camera.frame_name;
 
     // Configure publishers
-    camera.image_pub = node_->create_publisher<sensor_msgs::msg::Image>(camera.name + "/color", 10);
+    camera.image_pub = node_->create_publisher<sensor_msgs::msg::Image>(camera.name + "/color", 1);
+    camera.depth_image_pub =
+      node_->create_publisher<sensor_msgs::msg::Image>(camera.name + "/depth", 1);
     camera.camera_info_pub =
-      node_->create_publisher<sensor_msgs::msg::CameraInfo>(camera.name + "/camera_info", 10);
+      node_->create_publisher<sensor_msgs::msg::CameraInfo>(camera.name + "/camera_info", 1);
 
-    // Allocate space for image data
+    // Setup contaienrs for color image data
+    camera.image.header.frame_id = camera.frame_name;
+
     const auto image_size = camera.width * camera.height * 3;
     camera.image_buffer.resize(image_size);
-
-    // Set defaults for the image and camera_info, hardcoding for now
     camera.image.data.resize(image_size);
     camera.image.width = camera.width;
     camera.image.height = camera.height;
     camera.image.step = camera.width * 3;
+    camera.image.encoding = sensor_msgs::image_encodings::RGB8;
 
+    // Depth image data
+    camera.depth_image.header.frame_id = camera.frame_name;
+    camera.depth_buffer.resize(camera.width * camera.height);
+    camera.depth_buffer_flipped.resize(camera.width * camera.height);
+    camera.depth_image.data.resize(camera.width * camera.height * sizeof(float));
+    camera.depth_image.width = camera.width;
+    camera.depth_image.height = camera.height;
+    camera.depth_image.step = camera.width * sizeof(float);
+    camera.depth_image.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+
+    // Camera info
+    camera.camera_info.header.frame_id = camera.frame_name;
     camera.camera_info.width = camera.width;
     camera.camera_info.height = camera.height;
-    camera.image.encoding = sensor_msgs::image_encodings::RGB8;
     camera.camera_info.distortion_model = "plumb_bob";
+    camera.camera_info.k.fill(0.0);
+    camera.camera_info.r.fill(0.0);
+    camera.camera_info.p.fill(0.0);
     camera.camera_info.d.resize(5, 0.0);
 
-    camera.camera_info.k.fill(0.0);
-    camera.camera_info.k[0] = fx;
-    camera.camera_info.k[2] = cx;
-    camera.camera_info.k[4] = fy;
-    camera.camera_info.k[5] = cy;
-    camera.camera_info.k[8] = 1.0;
-
-    camera.camera_info.p.fill(0.0);
-    camera.camera_info.p[0] = fx;
-    camera.camera_info.p[2] = cx;
-    camera.camera_info.p[5] = fy;
-    camera.camera_info.p[6] = cy;
-    camera.camera_info.p[10] = 1.0;
-
-    camera.camera_info.r.fill(0.0);
-    camera.camera_info.r[0] = 1.0;
-    camera.camera_info.r[4] = 1.0;
-    camera.camera_info.r[8] = 1.0;
+    double focal_scaling = (1.0 / std::tan((cam_fovy * M_PI / 180.0) / 2.0)) * camera.height / 2.0;
+    camera.camera_info.k[0] = camera.camera_info.p[0] = focal_scaling;
+    camera.camera_info.k[2] = camera.camera_info.p[2] = static_cast<double>(camera.width) / 2.0;
+    camera.camera_info.k[4] = camera.camera_info.p[5] = focal_scaling;
+    camera.camera_info.k[5] = camera.camera_info.p[6] = static_cast<double>(camera.height) / 2.0;
+    camera.camera_info.k[8] = camera.camera_info.p[10] = 1.0;
 
     // Add to list of cameras
     cameras_.push_back(camera);
