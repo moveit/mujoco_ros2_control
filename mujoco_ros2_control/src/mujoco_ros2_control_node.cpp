@@ -87,8 +87,8 @@ int main(int argc, const char **argv)
     rendering->update();
 
     // Updating cameras at ~6 Hz
-    // TODO: Break control and rendering into separate processes
-    if (simstart - last_cam_update > 1.0/6.0)
+    // TODO(eholum): Break control and rendering into separate processes
+    if (simstart - last_cam_update > 1.0 / 6.0)
     {
       rendering->update_cameras();
       last_cam_update = simstart;
