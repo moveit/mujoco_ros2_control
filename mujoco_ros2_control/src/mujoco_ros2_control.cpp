@@ -154,7 +154,7 @@ void MujocoRos2Control::init(rclcpp::Executor::SharedPtr executor)
   controller_manager_ = std::make_shared<controller_manager::ControllerManager>(
     std::move(resource_manager), cm_executor_, "controller_manager", "");
 
-  cm_executor_->add_node(controller_manager_);  // Useful?
+  cm_executor_->add_node(controller_manager_);
 
   clock_publisher_ = controller_manager_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
 
