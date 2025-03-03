@@ -138,14 +138,13 @@ hardware_interface::return_type MujocoSystem::write(
 }
 
 bool MujocoSystem::init_sim(
-  rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data,
-  const urdf::Model &urdf_model, const hardware_interface::HardwareInfo &hardware_info)
+  mjModel *mujoco_model, mjData *mujoco_data, const urdf::Model &urdf_model,
+  const hardware_interface::HardwareInfo &hardware_info)
 {
-  node_ = node;
   mj_model_ = mujoco_model;
   mj_data_ = mujoco_data;
 
-  logger_ = rclcpp::get_logger(node_->get_name() + std::string("mujoco_system"));
+  logger_ = rclcpp::get_logger("mujoco system");
 
   register_joints(urdf_model, hardware_info);
   register_sensors(urdf_model, hardware_info);
