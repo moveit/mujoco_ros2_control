@@ -47,18 +47,19 @@ std::string MujocoRos2Control::get_robot_description()
   // Getting robot description from parameter first. If not set trying from topic
   std::string robot_description;
 
-  auto node = std::make_shared<rclcpp::Node>("robot_description_node");
+  auto node = std::make_shared<rclcpp::Node>(
+    "robot_description_node",
+    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
   cm_executor_->add_node(node);
 
-  try
+  if (node->has_parameter("robot_description"))
   {
     robot_description = node->get_parameter("robot_description").as_string();
+    return robot_description;
   }
-  catch (rclcpp::exceptions::ParameterNotDeclaredException &e)
-  {
-    RCLCPP_WARN(
-      logger_, "Impossible to get robot_description from parameter. Getting it from topic...");
-  }
+
+  RCLCPP_WARN(
+    logger_, "Impossible to get robot_description from parameter. Getting it from topic...");
 
   auto robot_description_sub = node->create_subscription<std_msgs::msg::String>(
     "robot_description", rclcpp::QoS(1).transient_local(),
@@ -152,7 +153,7 @@ void MujocoRos2Control::init(rclcpp::Executor::SharedPtr executor)
   // Create the controller manager
   RCLCPP_INFO(logger_, "Loading controller_manager");
   controller_manager_ = std::make_shared<controller_manager::ControllerManager>(
-    std::move(resource_manager), cm_executor_, "controller_manager", "");
+    std::move(resource_manager), cm_executor_, "controller_manager");
 
   cm_executor_->add_node(controller_manager_);
 
