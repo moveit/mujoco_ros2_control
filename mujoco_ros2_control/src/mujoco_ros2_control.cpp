@@ -161,8 +161,6 @@ void MujocoRos2Control::init(std::shared_ptr<rclcpp::executors::MultiThreadedExe
     rclcpp::Parameter("use_sim_time", rclcpp::ParameterValue(true)));
 
   stop_cm_thread_ = false;
-  auto spin = [this]() { cm_executor_->spin(); };
-  cm_thread_ = std::thread(spin);
 }
 
 void MujocoRos2Control::update()

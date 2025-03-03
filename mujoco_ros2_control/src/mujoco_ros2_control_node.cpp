@@ -74,6 +74,10 @@ int main(int argc, const char **argv)
   rendering->init(node, mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
+  // Thread to allow node's spinning
+  auto spin = [executor]() { executor->spin(); };
+  std::thread spin_thread = std::thread(spin);
+
   // run main loop, target real-time simulation and 60 fps rendering
   while (rclcpp::ok() && !rendering->is_close_flag_raised())
   {
@@ -90,6 +94,8 @@ int main(int argc, const char **argv)
   }
 
   rendering->close();
+
+  if (spin_thread.joinable()) spin_thread.join();
 
   // free MuJoCo model and data
   mj_deleteData(mujoco_data);
