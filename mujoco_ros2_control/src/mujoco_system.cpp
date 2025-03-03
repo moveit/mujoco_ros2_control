@@ -144,7 +144,7 @@ bool MujocoSystem::init_sim(
   mj_model_ = mujoco_model;
   mj_data_ = mujoco_data;
 
-  logger_ = rclcpp::get_logger("mujoco system");
+  logger_ = rclcpp::get_logger("mujoco_system");
 
   register_joints(urdf_model, hardware_info);
   register_sensors(urdf_model, hardware_info);
