@@ -46,6 +46,8 @@ struct CameraData
   uint32_t width;
   uint32_t height;
 
+  std::vector<uint8_t> image_buffer;
+
   sensor_msgs::msg::Image image;
   sensor_msgs::msg::CameraInfo camera_info;
 
