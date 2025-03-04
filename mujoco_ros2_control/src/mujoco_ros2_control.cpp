@@ -59,7 +59,9 @@ std::string MujocoRos2Control::get_robot_description()
   }
 
   RCLCPP_WARN(
-    logger_, "Impossible to get robot_description from parameter. Getting it from topic...");
+    logger_,
+    "Failed to get robot_description from parameter. Will listen on the ~/robot_description "
+    "topic...");
 
   auto robot_description_sub = node->create_subscription<std_msgs::msg::String>(
     "robot_description", rclcpp::QoS(1).transient_local(),
