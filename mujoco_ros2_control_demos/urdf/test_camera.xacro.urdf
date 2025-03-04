@@ -48,16 +48,23 @@
   <joint name="camera_joint" type="revolute">
     <parent link="base_link"/>
     <child link="camera"/>
-    <origin xyz="0 0 1" rpy="0 1.5708 1.5708"/>
-    <axis xyz="0 0 1"/>
-    <limit lower="-0.5" upper="0.5" effort="1" velocity="1"/>
+    <origin xyz="0 0 1" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5236" upper="0.5236" effort="1" velocity="1"/>
   </joint>
 
+  <!--
+  Mujoco camera conventions have the z-frame pointed into the camera, whereas
+  ROS conventions expects the opposite. We adjust for that here.
+
+  https://mujoco.readthedocs.io/en/3.2.7/modeling.html#cameras
+  https://github.com/ros2/common_interfaces/blob/22012ae1f60903e100aca2765f17ad6a62e6777a/sensor_msgs/msg/Image.msg#L4
+  -->
   <link name="camera_optical_frame" />
   <joint name="camera_optical_joint" type="fixed">
     <parent link="camera"/>
     <child link="camera_optical_frame"/>
-    <origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+    <origin xyz="0 0 0" rpy="3.14159 0 0"/>
     <axis xyz="0 0 0"/>
   </joint>
 
