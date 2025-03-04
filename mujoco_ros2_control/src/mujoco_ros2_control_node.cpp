@@ -76,8 +76,8 @@ int main(int argc, const char **argv)
   rendering->init(mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
-  auto cameras = std::make_unique<mujoco_ros2_control::MujocoCameras>();
-  cameras->init(node, mujoco_model, mujoco_data);
+  auto cameras = std::make_unique<mujoco_ros2_control::MujocoCameras>(node);
+  cameras->init(mujoco_model);
 
   // run main loop, target real-time simulation and 60 fps rendering with cameras around 6 hz
   mjtNum last_cam_update = mujoco_data->time;
@@ -98,7 +98,7 @@ int main(int argc, const char **argv)
     // TODO(eholum): Break control and rendering into separate processes
     if (simstart - last_cam_update > 1.0 / 6.0)
     {
-      cameras->update_cameras();
+      cameras->update(mujoco_model, mujoco_data);
       last_cam_update = simstart;
     }
   }

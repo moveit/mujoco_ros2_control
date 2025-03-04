@@ -61,26 +61,24 @@ struct CameraData
 class MujocoCameras
 {
 public:
-  MujocoCameras();
+  explicit MujocoCameras(rclcpp::Node::SharedPtr &node);
 
-  void init(rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data);
-  void update_cameras();
+  void init(mjModel *mujoco_model);
+  void update(mjModel *mujoco_model, mjData *mujoco_data);
   void close();
 
 private:
-  void register_cameras();
+  void register_cameras(const mjModel *mujoco_model);
 
   rclcpp::Node::SharedPtr node_;
-
-  mjModel *mj_model_;
-  mjData *mj_data_;
 
   // Rendering options for the cameras, currently hard coded to defaults
   mjvOption mjv_opt_;
   mjvScene mjv_scn_;
   mjrContext mjr_con_;
 
-  // Additional user specified cameras
+  // Containers for camera data and ROS constructs
   std::vector<CameraData> cameras_;
 };
+
 }  // namespace mujoco_ros2_control
