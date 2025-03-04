@@ -104,6 +104,7 @@ int main(int argc, const char **argv)
   }
 
   rendering->close();
+  cameras->close();
 
   // free MuJoCo model and data
   mj_deleteData(mujoco_data);

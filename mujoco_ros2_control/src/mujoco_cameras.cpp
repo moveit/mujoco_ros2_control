@@ -98,6 +98,12 @@ void MujocoCameras::update(mjModel *mujoco_model, mjData *mujoco_data)
   }
 }
 
+void MujocoCameras::close()
+{
+  mjv_freeScene(&mjv_scn_);
+  mjr_freeContext(&mjr_con_);
+}
+
 void MujocoCameras::register_cameras(const mjModel *mujoco_model)
 {
   cameras_.resize(0);
