@@ -1,0 +1,30 @@
+<mujoco model="test_camera">
+
+    <visual>
+        <headlight ambient="0.7 0.7 0.7" diffuse="0.2 0.2 0.2" specular="0.1 0.1 0.1"/>
+        <map znear="0.01"/>
+        <scale contactwidth="0.02" contactheight="0.5"/>
+        <rgba rangefinder="1 1 0.1 0.1"/>
+    </visual>
+
+    <worldbody>
+        <geom name="red_box" type="box" size=".1 .1 .1" rgba="1 0 0 1"/>
+        <geom name="green_sphere" pos="0.3 0.3 0.3" size=".1" rgba="0 1 0 1"/>
+
+        <body name="camera" pos="0 0 1" euler="0 0 0">
+            <joint name="camera_joint" type="hinge" axis="0 1 0" range="-30 30" damping="0.1"/>
+            <camera name="camera" fovy="58" mode="fixed" resolution="640 480" />
+            <site name="camera_optical_frame" size="0.03" />
+            <body name="camera_marker" pos="0 0 0.05">
+                <geom type="box" size="0.08 0.05 0.03" mass="1.0" rgba="0.5 0.5 1.0 1.0"/>
+                <geom type="box" size="0.01 0.01 0.01" mass="0.0" rgba="0.5 0.5 1.0 1.0" pos="0.04 0.055 0"/>
+                <geom type="cylinder" size="0.03 0.01" mass="0.0" rgba="0.5 0.5 1.0 1.0" pos="0 0 -0.04"/>
+            </body>
+        </body>
+    </worldbody>
+
+    <actuator>
+        <motor joint="camera_joint" ctrlrange="-1 1" gear="100"/>
+    </actuator>
+
+</mujoco>

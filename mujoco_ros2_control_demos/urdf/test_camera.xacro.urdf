@@ -1,0 +1,83 @@
+<?xml version="1.0" ?>
+<robot name="camera" >
+
+  <link name="base_link" />
+
+  <link name="red_box">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.2 0.2 0.2"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+  </link>
+  <joint name="red_box_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="red_box"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="green_sphere">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.1"/>
+      </geometry>
+      <material name="green">
+        <color rgba="0 1 0 1"/>
+      </material>
+    </visual>
+  </link>
+  <joint name="green_sphere_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="green_sphere"/>
+    <origin xyz="0.3 0.3 0.3" rpy="0 0 0"/>
+  </joint>
+
+  <link name="camera">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.05"/>
+      </geometry>
+    </visual>
+  </link>
+  <joint name="camera_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="camera"/>
+    <origin xyz="0 0 1" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.5236" upper="0.5236" effort="1" velocity="1"/>
+  </joint>
+
+  <!--
+  Mujoco camera conventions have the z-frame pointed into the camera, whereas
+  ROS conventions expects the opposite. We adjust for that here.
+
+  https://mujoco.readthedocs.io/en/3.2.7/modeling.html#cameras
+  https://github.com/ros2/common_interfaces/blob/22012ae1f60903e100aca2765f17ad6a62e6777a/sensor_msgs/msg/Image.msg#L4
+  -->
+  <link name="camera_optical_frame" />
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera"/>
+    <child link="camera_optical_frame"/>
+    <origin xyz="0 0 0" rpy="3.14159 0 0"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <ros2_control name="MujocoSystem" type="system">
+    <hardware>
+      <plugin>mujoco_ros2_control/MujocoSystem</plugin>
+    </hardware>
+    <joint name="camera_joint">
+      <command_interface name="position" />
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+    </joint>
+  </ros2_control>
+
+</robot>
