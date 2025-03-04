@@ -25,32 +25,24 @@
 namespace mujoco_ros2_control
 {
 
-MujocoCameras::MujocoCameras() : mj_model_(nullptr), mj_data_(nullptr) {}
+MujocoCameras::MujocoCameras(rclcpp::Node::SharedPtr &node) : node_(node) {}
 
-void MujocoCameras::init(rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data)
+void MujocoCameras::init(mjModel *mujoco_model)
 {
-  node_ = node;
-  mj_model_ = mujoco_model;
-  mj_data_ = mujoco_data;
-
   // initialize visualization data structures
   mjv_defaultOption(&mjv_opt_);
   mjv_defaultScene(&mjv_scn_);
   mjr_defaultContext(&mjr_con_);
 
   // create scene and context
-  mjv_makeScene(mj_model_, &mjv_scn_, 2000);
-  mjr_makeContext(mj_model_, &mjr_con_, mjFONTSCALE_150);
+  mjv_makeScene(mujoco_model, &mjv_scn_, 2000);
+  mjr_makeContext(mujoco_model, &mjr_con_, mjFONTSCALE_150);
 
   // Add user cameras
-  register_cameras();
-
-  // This might cause tearing, but having RViz and the renderer both open can
-  // wreak havoc on the rendering process.
-  glfwSwapInterval(0);
+  register_cameras(mujoco_model);
 }
 
-void MujocoCameras::update_cameras()
+void MujocoCameras::update(mjModel *mujoco_model, mjData *mujoco_data)
 {
   // Rendering is done offscreen
   mjr_setBuffer(mjFB_OFFSCREEN, &mjr_con_);
@@ -58,7 +50,8 @@ void MujocoCameras::update_cameras()
   for (auto &camera : cameras_)
   {
     // Render simple RGB data for all cameras
-    mjv_updateScene(mj_model_, mj_data_, &mjv_opt_, NULL, &camera.mjv_cam, mjCAT_ALL, &mjv_scn_);
+    mjv_updateScene(
+      mujoco_model, mujoco_data, &mjv_opt_, NULL, &camera.mjv_cam, mjCAT_ALL, &mjv_scn_);
     mjr_render(camera.viewport, &mjv_scn_, &mjr_con_);
 
     // Copy image into relevant buffers
@@ -67,8 +60,8 @@ void MujocoCameras::update_cameras()
 
     // Fix non-linear projections in the depth image and flip the data.
     // https://github.com/google-deepmind/mujoco/blob/3.2.7/python/mujoco/renderer.py#L190
-    float near = static_cast<float>(mj_model_->vis.map.znear * mj_model_->stat.extent);
-    float far = static_cast<float>(mj_model_->vis.map.zfar * mj_model_->stat.extent);
+    float near = static_cast<float>(mujoco_model->vis.map.znear * mujoco_model->stat.extent);
+    float far = static_cast<float>(mujoco_model->vis.map.zfar * mujoco_model->stat.extent);
     for (uint32_t h = 0; h < camera.height; h++)
     {
       for (uint32_t w = 0; w < camera.width; w++)
@@ -105,14 +98,14 @@ void MujocoCameras::update_cameras()
   }
 }
 
-void MujocoCameras::register_cameras()
+void MujocoCameras::register_cameras(const mjModel *mujoco_model)
 {
   cameras_.resize(0);
-  for (auto i = 0; i < mj_model_->ncam; ++i)
+  for (auto i = 0; i < mujoco_model->ncam; ++i)
   {
-    const char *cam_name = mj_model_->names + mj_model_->name_camadr[i];
-    const int *cam_resolution = mj_model_->cam_resolution + 2 * i;
-    const mjtNum cam_fovy = mj_model_->cam_fovy[i];
+    const char *cam_name = mujoco_model->names + mujoco_model->name_camadr[i];
+    const int *cam_resolution = mujoco_model->cam_resolution + 2 * i;
+    const mjtNum cam_fovy = mujoco_model->cam_fovy[i];
 
     // Construct CameraData wrapper and set defaults
     CameraData camera;
