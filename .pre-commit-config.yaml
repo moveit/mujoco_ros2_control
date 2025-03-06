@@ -52,4 +52,11 @@ repos:
         name: ament_copyright
         entry: ament_copyright
         language: system
-        exclude: .*/conf\.py$
+        exclude: '.*(conf\.py|launch\.py)$'
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+    - id: markdownlint
+      # Ignore line length checks
+      args: ["--disable", "MD013", "--"]
