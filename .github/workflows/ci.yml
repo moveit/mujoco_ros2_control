@@ -4,14 +4,11 @@ on:
   pull_request:
   merge_group:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
 
 env:
   ROS_DISTRO: humble
-  MUJOCO_VERSION: 3.2.7
-  MUJOCO_DIR: "/opt/mujoco/mujoco"
-  CPU_ARCH: $(uname -m)
 
 jobs:
   pre-commit:
@@ -34,33 +31,19 @@ jobs:
 
   build_and_test:
     needs: pre-commit
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - name: Checkout code from current branch
       uses: actions/checkout@v4
-    - name: Setup ROS
-      uses: ros-tooling/setup-ros@v0.7
-    - name: Install dependencies
-      run: |
-        apt-get update
-        apt-get install -y libglfw3-dev
-        rosdep update --rosdistro ${{ env.ROS_DISTRO }}
-        rosdep install --from-paths . --ignore-src -y --rosdistro ${{ env.ROS_DISTRO }}
-    - name: Install MuJoCo
-      run: |
-        mkdir -p ${{ env.MUJOCO_DIR }}
-        wget https://github.com/google-deepmind/mujoco/releases/download/${{ env.MUJOCO_VERSION }}/mujoco-${{ env.MUJOCO_VERSION }}-linux-${{ env.CPU_ARCH }}.tar.gz
-        tar -xzf "mujoco-${{ env.MUJOCO_VERSION }}-linux-${{ env.CPU_ARCH }}.tar.gz" -C $(dirname "${{ env.MUJOCO_DIR }}")
-      env:
-        MUJOCO_DIR: ${{ env.MUJOCO_DIR }}-${{ env.MUJOCO_VERSION }}
-    - name: Build
-      run: |
-        source /opt/ros/${{ env.ROS_DISTRO }}/setup.bash
-        colcon build --merge-install --cmake-args -DCMAKE_BUILD_TYPE=Release
-      env:
-        MUJOCO_DIR: ${{ env.MUJOCO_DIR }}-${{ env.MUJOCO_VERSION }}
-    - name: Test
-      run: |
-        source /opt/ros/${{ env.ROS_DISTRO }}/setup.bash
-        source install/setup.bash
-        colcon test --merge-install
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Build in Docker container
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/Dockerfile
+        push: false
+        load: true
+        tags: mujoco_ros2_control:latest
+    - name: Test in Docker container
+      run: docker run --entrypoint "/bin/bash" --rm mujoco_ros2_control:latest -c "colcon test && colcon test-result --verbose"
