@@ -26,10 +26,12 @@
 
 namespace mujoco_ros2_control
 {
-MujocoRos2Control::MujocoRos2Control(mjModel *mujoco_model, mjData *mujoco_data)
-    : mj_model_(mujoco_model),
+MujocoRos2Control::MujocoRos2Control(
+  rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data)
+    : node_(node),
+      mj_model_(mujoco_model),
       mj_data_(mujoco_data),
-      logger_(rclcpp::get_logger("mujoco_ros2_control")),
+      logger_(rclcpp::get_logger(node_->get_name() + std::string(".mujoco_ros2_control"))),
       control_period_(rclcpp::Duration(1, 0)),
       last_update_sim_time_ros_(0, 0, RCL_ROS_TIME)
 {
@@ -40,6 +42,8 @@ MujocoRos2Control::~MujocoRos2Control()
   stop_cm_thread_ = true;
   cm_executor_->remove_node(controller_manager_);
   cm_executor_->cancel();
+
+  if (cm_thread_.joinable()) cm_thread_.join();
 }
 
 std::string MujocoRos2Control::get_robot_description()
@@ -80,9 +84,13 @@ std::string MujocoRos2Control::get_robot_description()
   return robot_description;
 }
 
-void MujocoRos2Control::init(rclcpp::Executor::SharedPtr executor)
+void MujocoRos2Control::init()
 {
-  cm_executor_ = executor;
+  clock_publisher_ = node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
+
+  cm_executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+  cm_executor_->add_node(node_);
+
   std::string urdf_string = this->get_robot_description();
 
   // Read urdf from ros parameter server then
@@ -156,10 +164,7 @@ void MujocoRos2Control::init(rclcpp::Executor::SharedPtr executor)
   RCLCPP_INFO(logger_, "Loading controller_manager");
   controller_manager_ = std::make_shared<controller_manager::ControllerManager>(
     std::move(resource_manager), cm_executor_, "controller_manager");
-
   cm_executor_->add_node(controller_manager_);
-
-  clock_publisher_ = controller_manager_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
 
   if (!controller_manager_->has_parameter("update_rate"))
   {
@@ -176,6 +181,8 @@ void MujocoRos2Control::init(rclcpp::Executor::SharedPtr executor)
     rclcpp::Parameter("use_sim_time", rclcpp::ParameterValue(true)));
 
   stop_cm_thread_ = false;
+  auto spin = [this]() { cm_executor_->spin(); };
+  cm_thread_ = std::thread(spin);
 }
 
 void MujocoRos2Control::update()

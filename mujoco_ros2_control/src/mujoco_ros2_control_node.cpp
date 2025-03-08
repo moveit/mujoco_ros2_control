@@ -61,11 +61,9 @@ int main(int argc, const char **argv)
   mujoco_data = mj_makeData(mujoco_model);
 
   // initialize mujoco control
-  auto mujoco_control = mujoco_ros2_control::MujocoRos2Control(mujoco_model, mujoco_data);
+  auto mujoco_control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
 
-  auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
-
-  mujoco_control.init(executor);
+  mujoco_control.init();
   RCLCPP_INFO_STREAM(
     node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
 
@@ -73,10 +71,6 @@ int main(int argc, const char **argv)
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
   rendering->init(mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
-
-  // Thread to allow node's spinning
-  auto spin = [executor]() { executor->spin(); };
-  std::thread spin_thread = std::thread(spin);
 
   // run main loop, target real-time simulation and 60 fps rendering
   while (rclcpp::ok() && !rendering->is_close_flag_raised())
@@ -94,8 +88,6 @@ int main(int argc, const char **argv)
   }
 
   rendering->close();
-
-  if (spin_thread.joinable()) spin_thread.join();
 
   // free MuJoCo model and data
   mj_deleteData(mujoco_data);
