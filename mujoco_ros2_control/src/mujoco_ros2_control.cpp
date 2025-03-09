@@ -75,7 +75,7 @@ std::string MujocoRos2Control::get_robot_description()
 
   while (robot_description.empty() && rclcpp::ok())
   {
-    rclcpp::spin_some(node)
+    rclcpp::spin_some(node);
     RCLCPP_INFO(node->get_logger(), "Waiting for robot description message");
     rclcpp::sleep_for(std::chrono::milliseconds(500));
   }
@@ -86,7 +86,6 @@ std::string MujocoRos2Control::get_robot_description()
 void MujocoRos2Control::init()
 {
   clock_publisher_ = node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
-
 
   std::string urdf_string = this->get_robot_description();
 
@@ -159,7 +158,7 @@ void MujocoRos2Control::init()
   // Create the controller manager
   RCLCPP_INFO(logger_, "Loading controller_manager");
   controller_manager_ = std::make_shared<controller_manager::ControllerManager>(
-    std::move(resource_manager), cm_executor_, "controller_manager");
+    std::move(resource_manager), cm_executor_, "controller_manager", node_->get_namespace());
   cm_executor_->add_node(controller_manager_);
 
   if (!controller_manager_->has_parameter("update_rate"))
