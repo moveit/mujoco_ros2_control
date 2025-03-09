@@ -54,7 +54,6 @@ std::string MujocoRos2Control::get_robot_description()
   auto node = std::make_shared<rclcpp::Node>(
     "robot_description_node",
     rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
-  cm_executor_->add_node(node);
 
   if (node->has_parameter("robot_description"))
   {
