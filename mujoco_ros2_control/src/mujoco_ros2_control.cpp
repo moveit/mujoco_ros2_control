@@ -76,7 +76,7 @@ std::string MujocoRos2Control::get_robot_description()
 
   while (robot_description.empty() && rclcpp::ok())
   {
-    cm_executor_->spin_once();
+    rclcpp::spin_some(node)
     RCLCPP_INFO(node->get_logger(), "Waiting for robot description message");
     rclcpp::sleep_for(std::chrono::milliseconds(500));
   }
