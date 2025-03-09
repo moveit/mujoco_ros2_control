@@ -88,8 +88,6 @@ void MujocoRos2Control::init()
 {
   clock_publisher_ = node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
 
-  cm_executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
-  cm_executor_->add_node(node_);
 
   std::string urdf_string = this->get_robot_description();
 
