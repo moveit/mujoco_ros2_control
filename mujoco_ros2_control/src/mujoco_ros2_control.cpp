@@ -93,7 +93,6 @@ void MujocoRos2Control::init()
 
   std::string urdf_string = this->get_robot_description();
 
-  // Read urdf from ros parameter server then
   // setup actuators and mechanism control node.
   std::vector<hardware_interface::HardwareInfo> control_hardware_info;
   try
