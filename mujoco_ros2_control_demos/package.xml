@@ -23,6 +23,8 @@
  <depend>velocity_controllers</depend>
  <depend>force_torque_sensor_broadcaster</depend>
 
+ <exec_depend>position_controllers</exec_depend>
+
  <test_depend>ament_lint_auto</test_depend>
  <test_depend>ament_cmake_clang_format</test_depend>
  <test_depend>ament_cmake_cppcheck</test_depend>

@@ -33,17 +33,26 @@ Use ``mujoco_ros2_control/MujocoSystem`` for plugin
     </joint>
   </ros2_control>
 
-Convert URDF model to xml
+Convert URDF model to XML
 --------------------------
-You need to convert the URDF model to a MJCF XML file.
+URDF models must be converted to `MJCF XML <https://mujoco.readthedocs.io/en/latest/modeling.html>`_ files.
 Make sure to use the same name for the link and joint, which are mapped to the body and joint in Mujoco.
-You need to specify <limit> which is mapped to ``range`` in MJCF. For now, there is no way to specify velocity or acceleration limit.
+You need to specify <limit> which is mapped to ``range`` in MJCF.
+For now, there is no way to specify velocity or acceleration limit.
 
-For force torque sensor, you need to map the sensor to a force sensor and a torque sensor in MJCF since there is no combined force torque sensor in MuJoCo.
-The name of each sensor should be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
-For example, if you have a force torque sensor called ``my_sensor``, you need to create ``my_sensor_force`` and ``my_sensor_torque`` in MJCF.
+For force torque sensors, there is no combined force torque sensor in MuJoCo.
+Therefore in ROS, a single force torque sensor must be mapped to both a force sensor and a torque sensor in MJCF.
+The name of each sensor must be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
+For example, the mapped names for a ROS force torque sensor ``my_sensor`` would be ``my_sensor_force`` and ``my_sensor_torque`` in MJCF.
 
-Check ``mujoco_ros2_control_demos/mujoco_models`` for examples.
+The drivers additionally support simulated RGB-D cameras for publishing simulated color images and depth maps.
+Cameras must be given a name and be attached to a joint called ``<name>_optical_frame``.
+The camera_info, color, and depth images will be published to topics called ``<name>/camera_info``,
+``<name>/color``, and ``<name>/depth``, repectively.
+Also note that MuJuCo's conventions for cameras are different than ROS's, and which must be accounted for.
+An overview is available through the "camera" demo.
+
+For additional information refer to the ``mujoco_ros2_control_demos/mujoco_models`` for examples.
 
 Specify the location of Mujoco models and the controller configuration file
 ----------------------------------------------------------------------------
