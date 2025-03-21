@@ -45,10 +45,8 @@ MujocoRendering::MujocoRendering()
 {
 }
 
-void MujocoRendering::init(
-  rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data)
+void MujocoRendering::init(mjModel *mujoco_model, mjData *mujoco_data)
 {
-  node_ = node;
   mj_model_ = mujoco_model;
   mj_data_ = mujoco_data;
 

@@ -61,14 +61,15 @@ int main(int argc, const char **argv)
   mujoco_data = mj_makeData(mujoco_model);
 
   // initialize mujoco control
-  auto control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
-  control.init();
+  auto mujoco_control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
+
+  mujoco_control.init();
   RCLCPP_INFO_STREAM(
     node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
 
   // initialize mujoco redering
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
-  rendering->init(node, mujoco_model, mujoco_data);
+  rendering->init(mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
   // run main loop, target real-time simulation and 60 fps rendering
@@ -81,7 +82,7 @@ int main(int argc, const char **argv)
     mjtNum simstart = mujoco_data->time;
     while (mujoco_data->time - simstart < 1.0 / 60.0)
     {
-      control.update();
+      mujoco_control.update();
     }
     rendering->update();
   }
