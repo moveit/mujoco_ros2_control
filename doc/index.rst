@@ -31,6 +31,18 @@ Use ``mujoco_ros2_control/MujocoSystem`` for plugin
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
+    <sensor name="cart_imu">
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+      <state_interface name="angular_velocity.x"/>
+      <state_interface name="angular_velocity.y"/>
+      <state_interface name="angular_velocity.z"/>
+      <state_interface name="linear_acceleration.x"/>
+      <state_interface name="linear_acceleration.y"/>
+      <state_interface name="linear_acceleration.z"/>
+    </sensor>
   </ros2_control>
 
 Convert URDF model to xml
@@ -38,6 +50,10 @@ Convert URDF model to xml
 You need to convert the URDF model to a MJCF XML file.
 Make sure to use the same name for the link and joint, which are mapped to the body and joint in Mujoco.
 You need to specify <limit> which is mapped to ``range`` in MJCF. For now, there is no way to specify velocity or acceleration limit.
+
+For IMU sensor, you need to use ``framequat``, ``gyro``, and ``accelerometer`` sensors in MJCF since there is no combined IMU in MuJoCo.
+The name of each sensor should be ``sensor_name`` + ``_quat``, ``sensor_name`` + ``_gyro``, and ``sensor_name`` + ``_accel`` respectively.
+
 
 For force torque sensor, you need to map the sensor to a force sensor and a torque sensor in MJCF since there is no combined force torque sensor in MuJoCo.
 The name of each sensor should be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
