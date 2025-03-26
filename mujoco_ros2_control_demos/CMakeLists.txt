@@ -52,6 +52,9 @@ ament_target_dependencies(example_tricycle_drive ${THIS_PACKAGE_DEPENDS})
 add_executable(example_gripper examples/example_gripper.cpp)
 ament_target_dependencies(example_gripper ${THIS_PACKAGE_DEPENDS})
 
+add_executable(example_camera examples/example_camera.cpp)
+ament_target_dependencies(example_camera ${THIS_PACKAGE_DEPENDS})
+
 install(TARGETS
     example_position
     example_velocity
@@ -59,6 +62,7 @@ install(TARGETS
     example_diff_drive
     example_tricycle_drive
     example_gripper
+    example_camera
   DESTINATION lib/${PROJECT_NAME}
 )
 
