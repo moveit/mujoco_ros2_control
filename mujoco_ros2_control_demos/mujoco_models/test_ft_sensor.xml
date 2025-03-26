@@ -9,11 +9,11 @@
         <body name="motor" pos="0 0 0.3" euler="0 0 0">
             <geom type="cylinder" size="0.25 0.3" rgba="0 .8 0 1" />
             <inertial pos="0 0 0" mass="10" diaginertia="1.0 1.0 1.0" />
-            <body name="fts_sensor" pos="0 0 0.4" euler="0 0 0">
+            <body name="motor_fts" pos="0 0 0.4" euler="0 0 0">
                 <joint name="sensor_to_motor" type="hinge" axis="0 0 1" pos="0 0 0" />
                 <geom type="cylinder" size="0.25 0.1" rgba="0 0 .8 1" />
                 <inertial pos="0 0 0" mass="1" diaginertia="1.0 1.0 1.0" />
-                <site name="fts_sensor_site" pos="0 0 0"/>
+                <site name="motor_fts" pos="0 0 0"/>
             </body>
         </body>
         <body name="weight" pos="0 0 10" euler="0 0 0">
@@ -23,7 +23,7 @@
             </body>
 	</worldbody>
     <sensor>
-        <force name="fts_sensor_force" site="fts_sensor_site"/>
-        <torque name="fts_sensor_torque" site="fts_sensor_site"/>
+        <force name="motor_force" site="motor_fts"/>
+        <torque name="motor_torque" site="motor_fts"/>
     </sensor>
 </mujoco>

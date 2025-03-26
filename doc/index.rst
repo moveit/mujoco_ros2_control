@@ -43,6 +43,15 @@ Use ``mujoco_ros2_control/MujocoSystem`` for plugin
       <state_interface name="linear_acceleration.y"/>
       <state_interface name="linear_acceleration.z"/>
     </sensor>
+    <sensor name="motor_fts">
+      <state_interface name="force.x"/>
+      <state_interface name="force.y"/>
+      <state_interface name="force.z"/>
+      <state_interface name="torque.x"/>
+      <state_interface name="torque.y"/>
+      <state_interface name="torque.z"/>
+      <param name="frame_id">motor_fts</param>
+    </sensor>
   </ros2_control>
 
 Convert URDF model to xml
