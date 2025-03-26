@@ -413,9 +413,6 @@ void MujocoSystem::register_sensors(
       sensor_data.orientation.name = sensor_name + "_quat";
       sensor_data.angular_velocity.name = sensor_name + "_gyro";
       sensor_data.linear_acceleration.name = sensor_name + "_accel";
-      std::cerr << "sensor names: " << sensor_data.name << " " << sensor_data.orientation.name
-                << " " << sensor_data.angular_velocity.name << " "
-                << sensor_data.linear_acceleration.name << std::endl;
 
       int quat_id = mj_name2id(mj_model_, mjOBJ_SENSOR, sensor_data.orientation.name.c_str());
       int gyro_id = mj_name2id(mj_model_, mjOBJ_SENSOR, sensor_data.angular_velocity.name.c_str());
