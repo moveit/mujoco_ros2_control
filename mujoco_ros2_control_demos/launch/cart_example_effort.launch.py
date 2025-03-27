@@ -44,9 +44,15 @@ def generate_launch_description():
         parameters=[robot_description]
     )
 
-    load_joint_state_controller = ExecuteProcess(
+    load_joint_state_broadcaster = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'joint_state_broadcaster'],
+        output='screen'
+    )
+
+    load_imu_sensor_broadcaster = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'imu_sensor_broadcaster'],
         output='screen'
     )
 
@@ -59,12 +65,18 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessStart(
                 target_action=node_mujoco_ros2_control,
-                on_start=[load_joint_state_controller],
+                on_start=[load_joint_state_broadcaster],
+            )
+        ),
+        RegisterEventHandler(
+            event_handler=OnProcessStart(
+                target_action=load_joint_state_broadcaster,
+                on_start=[load_imu_sensor_broadcaster],
             )
         ),
         RegisterEventHandler(
             event_handler=OnProcessExit(
-                target_action=load_joint_state_controller,
+                target_action=load_imu_sensor_broadcaster,
                 on_exit=[load_joint_trajectory_controller],
             )
         ),

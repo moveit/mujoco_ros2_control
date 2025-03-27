@@ -18,7 +18,7 @@
     </inertial>
   </link>
 
-  <link name="fts_sensor">
+  <link name="motor_fts">
     <visual>
       <geometry>
         <cylinder radius="0.5" length="0.2"/>
@@ -60,7 +60,7 @@
     <axis xyz="0 0 1"/>
     <origin xyz="0.0 0.0 0.4"/>
     <parent link="motor"/>
-    <child link="fts_sensor"/>
+    <child link="motor_fts"/>
     <limit effort="1000.0" lower="-3.14" upper="3.14" velocity="3.14"/>
   </joint>
 
@@ -77,14 +77,14 @@
       <plugin>mujoco_ros2_control/MujocoSystem</plugin>
     </hardware>
 
-    <sensor name="fts_sensor">
-        <state_interface name="force.x"/>
-        <state_interface name="force.y"/>
-        <state_interface name="force.z"/>
-        <state_interface name="torque.x"/>
-        <state_interface name="torque.y"/>
-        <state_interface name="torque.z"/>
-        <param name="frame_id">fts_sensor</param>
-      </sensor>
+    <sensor name="motor_fts">
+      <state_interface name="force.x"/>
+      <state_interface name="force.y"/>
+      <state_interface name="force.z"/>
+      <state_interface name="torque.x"/>
+      <state_interface name="torque.y"/>
+      <state_interface name="torque.z"/>
+      <param name="frame_id">motor_fts</param>
+    </sensor>
   </ros2_control>
 </robot>
