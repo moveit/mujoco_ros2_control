@@ -61,10 +61,10 @@ Make sure to use the same name for the link and joint, which are mapped to the b
 You need to specify <limit> which is mapped to ``range`` in MJCF.
 For now, there is no way to specify velocity or acceleration limit.
 
-For IMU sensor, you need to use ``framequat``, ``gyro``, and ``accelerometer`` sensors in MJCF since there is no combined IMU in MuJoCo.
+For an IMU sensor, we add ``framequat``, ``gyro``, and ``accelerometer`` sensors in the MJCF since there is no combined IMU in MuJoCo.
 The name of each sensor should be ``sensor_name`` + ``_quat``, ``sensor_name`` + ``_gyro``, and ``sensor_name`` + ``_accel`` respectively.
 
-For force torque sensor, you need to map the sensor to a force sensor and a torque sensor in MJCF since there is no combined force torque sensor in MuJoCo.
+For a force torque sensor, we map both a force sensor and a torque sensor in the MJCF since there is no combined force torque sensor in MuJoCo.
 The name of each sensor should be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
 For example, if you have a force torque sensor called ``my_sensor``, you need to create ``my_sensor_force`` and ``my_sensor_torque`` in MJCF.
 

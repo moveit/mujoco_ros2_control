@@ -22,6 +22,7 @@
  <depend>joint_trajectory_controller</depend>
  <depend>velocity_controllers</depend>
  <depend>force_torque_sensor_broadcaster</depend>
+ <depend>imu_sensor_broadcaster</depend>
 
  <exec_depend>position_controllers</exec_depend>
 
