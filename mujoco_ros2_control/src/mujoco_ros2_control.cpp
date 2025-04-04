@@ -177,7 +177,13 @@ void MujocoRos2Control::init()
     rclcpp::Parameter("use_sim_time", rclcpp::ParameterValue(true)));
 
   stop_cm_thread_ = false;
-  auto spin = [this]() { cm_executor_->spin(); };
+  auto spin = [this]()
+  {
+    while (rclcpp::ok() && !stop_cm_thread_)
+    {
+      cm_executor_->spin_once();
+    }
+  };
   cm_thread_ = std::thread(spin);
 }
 
