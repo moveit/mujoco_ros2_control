@@ -42,19 +42,57 @@ MujocoRos2Control::~MujocoRos2Control()
   stop_cm_thread_ = true;
   cm_executor_->remove_node(controller_manager_);
   cm_executor_->cancel();
-  cm_thread_.join();
+
+  if (cm_thread_.joinable()) cm_thread_.join();
+}
+
+std::string MujocoRos2Control::get_robot_description()
+{
+  // Getting robot description from parameter first. If not set trying from topic
+  std::string robot_description;
+
+  auto node = std::make_shared<rclcpp::Node>(
+    "robot_description_node",
+    rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
+
+  if (node->has_parameter("robot_description"))
+  {
+    robot_description = node->get_parameter("robot_description").as_string();
+    return robot_description;
+  }
+
+  RCLCPP_WARN(
+    logger_,
+    "Failed to get robot_description from parameter. Will listen on the ~/robot_description "
+    "topic...");
+
+  auto robot_description_sub = node->create_subscription<std_msgs::msg::String>(
+    "robot_description", rclcpp::QoS(1).transient_local(),
+    [&](const std_msgs::msg::String::SharedPtr msg)
+    {
+      if (!msg->data.empty() && robot_description.empty()) robot_description = msg->data;
+    });
+
+  while (robot_description.empty() && rclcpp::ok())
+  {
+    rclcpp::spin_some(node);
+    RCLCPP_INFO(node->get_logger(), "Waiting for robot description message");
+    rclcpp::sleep_for(std::chrono::milliseconds(500));
+  }
+
+  return robot_description;
 }
 
 void MujocoRos2Control::init()
 {
   clock_publisher_ = node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
-  // Read urdf from ros parameter server then
+
+  std::string urdf_string = this->get_robot_description();
+
   // setup actuators and mechanism control node.
-  std::string urdf_string;
   std::vector<hardware_interface::HardwareInfo> control_hardware_info;
   try
   {
-    urdf_string = node_->get_parameter("robot_description").as_string();
     control_hardware_info = hardware_interface::parse_control_resources_from_urdf(urdf_string);
   }
   catch (const std::runtime_error &ex)
@@ -103,7 +141,7 @@ void MujocoRos2Control::init()
 
     urdf::Model urdf_model;
     urdf_model.initString(urdf_string);
-    if (!mujoco_system->init_sim(node_, mj_model_, mj_data_, urdf_model, hardware))
+    if (!mujoco_system->init_sim(mj_model_, mj_data_, urdf_model, hardware))
     {
       RCLCPP_FATAL(logger_, "Could not initialize robot simulation interface");
       return;
@@ -122,7 +160,6 @@ void MujocoRos2Control::init()
   cm_executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   controller_manager_ = std::make_shared<controller_manager::ControllerManager>(
     std::move(resource_manager), cm_executor_, "controller_manager", node_->get_namespace());
-
   cm_executor_->add_node(controller_manager_);
 
   if (!controller_manager_->has_parameter("update_rate"))
