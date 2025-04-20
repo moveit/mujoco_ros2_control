@@ -22,6 +22,7 @@
 #define MUJOCO_ROS2_CONTROL__MUJOCO_ROS2_CONTROL_HPP_
 
 #include <memory>
+#include <string>
 
 #include "controller_manager/controller_manager.hpp"
 #include "pluginlib/class_loader.hpp"
@@ -44,7 +45,8 @@ public:
 
 private:
   void publish_sim_time(rclcpp::Time sim_time);
-  rclcpp::Node::SharedPtr node_;  // TODO(sangteak601): delete node
+  std::string get_robot_description();
+  rclcpp::Node::SharedPtr node_;
   mjModel *mj_model_;
   mjData *mj_data_;
 
@@ -52,7 +54,7 @@ private:
   std::shared_ptr<pluginlib::ClassLoader<MujocoSystemInterface>> robot_hw_sim_loader_;
 
   std::shared_ptr<controller_manager::ControllerManager> controller_manager_;
-  rclcpp::executors::MultiThreadedExecutor::SharedPtr cm_executor_;
+  rclcpp::Executor::SharedPtr cm_executor_;
   std::thread cm_thread_;
   bool stop_cm_thread_;
   rclcpp::Duration control_period_;
