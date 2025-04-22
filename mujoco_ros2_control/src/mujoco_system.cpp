@@ -42,7 +42,7 @@ hardware_interface::return_type MujocoSystem::read(
   {
     joint_state.position = mj_data_->qpos[joint_state.mj_pos_adr];
     joint_state.velocity = mj_data_->qvel[joint_state.mj_vel_adr];
-    joint_state.effort = mj_data_->qfrc_applied[joint_state.mj_vel_adr];
+    joint_state.effort = mj_data_->actuator_force[joint_state.mj_vel_adr];
   }
 
   // IMU Sensor data
@@ -114,7 +114,7 @@ hardware_interface::return_type MujocoSystem::write(
       }
       else
       {
-        mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position_command;
+        mj_data_->ctrl[joint_state.mj_pos_adr] = joint_state.position_command;
       }
     }
 
@@ -129,7 +129,7 @@ hardware_interface::return_type MujocoSystem::write(
       }
       else
       {
-        mj_data_->qvel[joint_state.mj_vel_adr] = joint_state.velocity_command;
+        mj_data_->ctrl[joint_state.mj_vel_adr] = joint_state.velocity_command;
       }
     }
 
