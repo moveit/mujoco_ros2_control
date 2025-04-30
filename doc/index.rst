@@ -44,6 +44,7 @@ Use ``mujoco_ros2_control/MujocoSystem`` for plugin
       <state_interface name="linear_acceleration.y"/>
       <state_interface name="linear_acceleration.z"/>
     </sensor>
+    <!-- Note the "_fts" suffix is required -->
     <sensor name="motor_fts">
       <state_interface name="force.x"/>
       <state_interface name="force.y"/>
