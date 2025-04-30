@@ -63,6 +63,7 @@ For now, there is no way to specify velocity or acceleration limit.
 
 For an IMU sensor, we add ``framequat``, ``gyro``, and ``accelerometer`` sensors in the MJCF since there is no combined IMU in MuJoCo.
 The name of each sensor should be ``sensor_name`` + ``_quat``, ``sensor_name`` + ``_gyro``, and ``sensor_name`` + ``_accel`` respectively.
+Take note that the sensor must be suffixed with `_imu`, as in the sample ros2_control xml above.
 
 For a force torque sensor, we map both a force sensor and a torque sensor in the MJCF since there is no combined force torque sensor in MuJoCo.
 The name of each sensor should be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
