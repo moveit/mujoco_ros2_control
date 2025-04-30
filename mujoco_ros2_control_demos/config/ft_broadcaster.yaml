@@ -7,5 +7,5 @@ controller_manager:
 
 force_torque_broadcaster:
   ros__parameters:
-    frame_id: fts_sensor
-    sensor_name: fts_sensor
+    frame_id: motor_fts
+    sensor_name: motor_fts

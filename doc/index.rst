@@ -31,6 +31,29 @@ Use ``mujoco_ros2_control/MujocoSystem`` for plugin
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
+    <!-- Note the "_imu" suffix is required -->
+    <sensor name="cart_imu">
+      <state_interface name="orientation.x"/>
+      <state_interface name="orientation.y"/>
+      <state_interface name="orientation.z"/>
+      <state_interface name="orientation.w"/>
+      <state_interface name="angular_velocity.x"/>
+      <state_interface name="angular_velocity.y"/>
+      <state_interface name="angular_velocity.z"/>
+      <state_interface name="linear_acceleration.x"/>
+      <state_interface name="linear_acceleration.y"/>
+      <state_interface name="linear_acceleration.z"/>
+    </sensor>
+    <!-- Note the "_fts" suffix is required -->
+    <sensor name="motor_fts">
+      <state_interface name="force.x"/>
+      <state_interface name="force.y"/>
+      <state_interface name="force.z"/>
+      <state_interface name="torque.x"/>
+      <state_interface name="torque.y"/>
+      <state_interface name="torque.z"/>
+      <param name="frame_id">motor_fts</param>
+    </sensor>
   </ros2_control>
 
 Convert URDF model to XML
@@ -40,10 +63,14 @@ Make sure to use the same name for the link and joint, which are mapped to the b
 You need to specify <limit> which is mapped to ``range`` in MJCF.
 For now, there is no way to specify velocity or acceleration limit.
 
-For force torque sensors, there is no combined force torque sensor in MuJoCo.
-Therefore in ROS, a single force torque sensor must be mapped to both a force sensor and a torque sensor in MJCF.
-The name of each sensor must be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
-For example, the mapped names for a ROS force torque sensor ``my_sensor`` would be ``my_sensor_force`` and ``my_sensor_torque`` in MJCF.
+For an IMU sensor, we add ``framequat``, ``gyro``, and ``accelerometer`` sensors in the MJCF since there is no combined IMU in MuJoCo.
+The name of each sensor should be ``sensor_name`` + ``_quat``, ``sensor_name`` + ``_gyro``, and ``sensor_name`` + ``_accel`` respectively.
+Take note that the sensor must be suffixed with `_imu`, as in the sample ros2_control xml above.
+
+For a force torque sensor, we map both a force sensor and a torque sensor in the MJCF since there is no combined force torque sensor in MuJoCo.
+The name of each sensor should be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
+For example, if you have a force torque sensor called ``my_sensor``, you need to create ``my_sensor_force`` and ``my_sensor_torque`` in MJCF.
+Take note that the sensor must be suffixed with `_fts`, as in the sample ros2_control xml above.
 
 The drivers additionally support simulated RGB-D cameras for publishing simulated color images and depth maps.
 Cameras must be given a name and be attached to a joint called ``<name>_optical_frame``.

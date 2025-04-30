@@ -46,10 +46,26 @@ hardware_interface::return_type MujocoSystem::read(
   }
 
   // IMU Sensor data
-  // TODO(sangteak601): For now all sensors are assumed to be FTS
-  // for (auto& data : imu_sensor_data_)
-  // {
-  // }
+  for (auto &data : imu_sensor_data_)
+  {
+    data.orientation.data.w() = mj_data_->sensordata[data.orientation.mj_sensor_index];
+    data.orientation.data.x() = mj_data_->sensordata[data.orientation.mj_sensor_index + 1];
+    data.orientation.data.y() = mj_data_->sensordata[data.orientation.mj_sensor_index + 2];
+    data.orientation.data.z() = mj_data_->sensordata[data.orientation.mj_sensor_index + 3];
+
+    data.angular_velocity.data.x() = mj_data_->sensordata[data.angular_velocity.mj_sensor_index];
+    data.angular_velocity.data.y() =
+      mj_data_->sensordata[data.angular_velocity.mj_sensor_index + 1];
+    data.angular_velocity.data.z() =
+      mj_data_->sensordata[data.angular_velocity.mj_sensor_index + 2];
+
+    data.linear_acceleration.data.x() =
+      mj_data_->sensordata[data.linear_acceleration.mj_sensor_index];
+    data.linear_acceleration.data.y() =
+      mj_data_->sensordata[data.linear_acceleration.mj_sensor_index + 1];
+    data.linear_acceleration.data.z() =
+      mj_data_->sensordata[data.linear_acceleration.mj_sensor_index + 2];
+  }
 
   // FT Sensor data
   for (auto &data : ft_sensor_data_)
@@ -133,7 +149,6 @@ hardware_interface::return_type MujocoSystem::write(
         clamp(joint_state.effort_command, min_eff, max_eff);
     }
   }
-
   return hardware_interface::return_type::OK;
 }
 
@@ -323,67 +338,152 @@ void MujocoSystem::register_joints(
 void MujocoSystem::register_sensors(
   const urdf::Model & /* urdf_model */, const hardware_interface::HardwareInfo &hardware_info)
 {
-  // TODO(sangteak601): for now, assuming all sensors are ft_sensor
-  ft_sensor_data_.resize(hardware_info.sensors.size());
-
+  // Assuming force/torque sensor end with "_fts" in the name,
+  // and IMU sensor end with "_imu" in the name
   for (size_t sensor_index = 0; sensor_index < hardware_info.sensors.size(); sensor_index++)
   {
     auto sensor = hardware_info.sensors.at(sensor_index);
+    std::string sensor_name = sensor.name;
+    sensor_name = sensor_name.substr(0, sensor_name.rfind('_'));
 
-    FTSensorData sensor_data;
-    sensor_data.name = sensor.name;
-    sensor_data.force.name = sensor.name + "_force";
-    sensor_data.torque.name = sensor.name + "_torque";
-
-    int force_sensor_id =
-      mj_name2id(mj_model_, mjtObj::mjOBJ_SENSOR, sensor_data.force.name.c_str());
-    int torque_sensor_id =
-      mj_name2id(mj_model_, mjtObj::mjOBJ_SENSOR, sensor_data.torque.name.c_str());
-
-    if (force_sensor_id == -1 || torque_sensor_id == -1)
+    if (sensor.name.find("_fts") != std::string::npos)
     {
-      RCLCPP_ERROR_STREAM(
-        logger_, "Failed to find sensor in mujoco model, sensor name: " << sensor.name);
-      continue;
+      FTSensorData sensor_data;
+      sensor_data.name = sensor_name;
+      sensor_data.force.name = sensor_name + "_force";
+      sensor_data.torque.name = sensor_name + "_torque";
+
+      int force_sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, sensor_data.force.name.c_str());
+      int torque_sensor_id = mj_name2id(mj_model_, mjOBJ_SENSOR, sensor_data.torque.name.c_str());
+
+      if (force_sensor_id == -1 || torque_sensor_id == -1)
+      {
+        RCLCPP_ERROR_STREAM(
+          logger_,
+          "Failed to find force/torque sensor in mujoco model, sensor name: " << sensor.name);
+        continue;
+      }
+
+      sensor_data.force.mj_sensor_index = mj_model_->sensor_adr[force_sensor_id];
+      sensor_data.torque.mj_sensor_index = mj_model_->sensor_adr[torque_sensor_id];
+
+      ft_sensor_data_.push_back(sensor_data);
+      auto &last_sensor_data = ft_sensor_data_.at(sensor_index);
+
+      for (const auto &state_if : sensor.state_interfaces)
+      {
+        if (state_if.name == "force.x")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.force.data.x());
+        }
+        else if (state_if.name == "force.y")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.force.data.y());
+        }
+        else if (state_if.name == "force.z")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.force.data.z());
+        }
+        else if (state_if.name == "torque.x")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.torque.data.x());
+        }
+        else if (state_if.name == "torque.y")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.torque.data.y());
+        }
+        else if (state_if.name == "torque.z")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.torque.data.z());
+        }
+      }
     }
 
-    sensor_data.force.mj_sensor_index = mj_model_->sensor_adr[force_sensor_id];
-    sensor_data.torque.mj_sensor_index = mj_model_->sensor_adr[torque_sensor_id];
-
-    ft_sensor_data_.at(sensor_index) = sensor_data;
-    auto &last_sensor_data = ft_sensor_data_.at(sensor_index);
-
-    for (const auto &state_if : sensor.state_interfaces)
+    else if (sensor.name.find("_imu") != std::string::npos)
     {
-      if (state_if.name == "force.x")
+      IMUSensorData sensor_data;
+      sensor_data.name = sensor_name;
+      sensor_data.orientation.name = sensor_name + "_quat";
+      sensor_data.angular_velocity.name = sensor_name + "_gyro";
+      sensor_data.linear_acceleration.name = sensor_name + "_accel";
+
+      int quat_id = mj_name2id(mj_model_, mjOBJ_SENSOR, sensor_data.orientation.name.c_str());
+      int gyro_id = mj_name2id(mj_model_, mjOBJ_SENSOR, sensor_data.angular_velocity.name.c_str());
+      int accel_id =
+        mj_name2id(mj_model_, mjOBJ_SENSOR, sensor_data.linear_acceleration.name.c_str());
+
+      if (quat_id == -1 || gyro_id == -1 || accel_id == -1)
       {
-        state_interfaces_.emplace_back(
-          sensor.name, state_if.name, &last_sensor_data.force.data.x());
+        RCLCPP_ERROR_STREAM(
+          logger_, "Failed to find IMU sensor in mujoco model, sensor name: " << sensor.name);
+        continue;
       }
-      else if (state_if.name == "force.y")
+
+      sensor_data.orientation.mj_sensor_index = mj_model_->sensor_adr[quat_id];
+      sensor_data.angular_velocity.mj_sensor_index = mj_model_->sensor_adr[gyro_id];
+      sensor_data.linear_acceleration.mj_sensor_index = mj_model_->sensor_adr[accel_id];
+
+      imu_sensor_data_.push_back(sensor_data);
+      auto &last_sensor_data = imu_sensor_data_.at(sensor_index);
+
+      for (const auto &state_if : sensor.state_interfaces)
       {
-        state_interfaces_.emplace_back(
-          sensor.name, state_if.name, &last_sensor_data.force.data.y());
-      }
-      else if (state_if.name == "force.z")
-      {
-        state_interfaces_.emplace_back(
-          sensor.name, state_if.name, &last_sensor_data.force.data.z());
-      }
-      else if (state_if.name == "torque.x")
-      {
-        state_interfaces_.emplace_back(
-          sensor.name, state_if.name, &last_sensor_data.torque.data.x());
-      }
-      else if (state_if.name == "torque.y")
-      {
-        state_interfaces_.emplace_back(
-          sensor.name, state_if.name, &last_sensor_data.torque.data.y());
-      }
-      else if (state_if.name == "torque.z")
-      {
-        state_interfaces_.emplace_back(
-          sensor.name, state_if.name, &last_sensor_data.torque.data.z());
+        if (state_if.name == "orientation.x")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.orientation.data.x());
+        }
+        else if (state_if.name == "orientation.y")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.orientation.data.y());
+        }
+        else if (state_if.name == "orientation.z")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.orientation.data.z());
+        }
+        else if (state_if.name == "orientation.w")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.orientation.data.w());
+        }
+        else if (state_if.name == "angular_velocity.x")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.angular_velocity.data.x());
+        }
+        else if (state_if.name == "angular_velocity.y")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.angular_velocity.data.y());
+        }
+        else if (state_if.name == "angular_velocity.z")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.angular_velocity.data.z());
+        }
+        else if (state_if.name == "linear_acceleration.x")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.linear_acceleration.data.x());
+        }
+        else if (state_if.name == "linear_acceleration.y")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.linear_acceleration.data.y());
+        }
+        else if (state_if.name == "linear_acceleration.z")
+        {
+          state_interfaces_.emplace_back(
+            sensor.name, state_if.name, &last_sensor_data.linear_acceleration.data.z());
+        }
       }
     }
   }
