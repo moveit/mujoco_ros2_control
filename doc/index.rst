@@ -68,6 +68,7 @@ Take note that the sensor must be suffixed with `_imu`, as in the sample ros2_co
 For a force torque sensor, we map both a force sensor and a torque sensor in the MJCF since there is no combined force torque sensor in MuJoCo.
 The name of each sensor should be ``sensor_name`` + ``_force`` and ``sensor_name`` + ``_torque``.
 For example, if you have a force torque sensor called ``my_sensor``, you need to create ``my_sensor_force`` and ``my_sensor_torque`` in MJCF.
+Take note that the sensor must be suffixed with `_fts`, as in the sample ros2_control xml above.
 
 The drivers additionally support simulated RGB-D cameras for publishing simulated color images and depth maps.
 Cameras must be given a name and be attached to a joint called ``<name>_optical_frame``.
