@@ -31,6 +31,7 @@ Use ``mujoco_ros2_control/MujocoSystem`` for plugin
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
+    <!-- Note the "_imu" suffix is required -->
     <sensor name="cart_imu">
       <state_interface name="orientation.x"/>
       <state_interface name="orientation.y"/>
