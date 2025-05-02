@@ -199,8 +199,8 @@ void MujocoSystem::register_joints(
     }
     if (mujoco_actuator_id == -1)
     {
-      RCLCPP_ERROR_STREAM(logger_, "No actuator found for joint: " << joint.name);
-      continue;
+      // This isn't a failure the joint just won't be controllable
+      RCLCPP_WARN_STREAM(logger_, "No actuator found for joint: " << joint.name);
     }
 
     // save information in joint_states_ variable
