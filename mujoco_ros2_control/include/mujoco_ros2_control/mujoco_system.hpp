@@ -82,6 +82,7 @@ public:
     int mj_joint_type;
     int mj_pos_adr;
     int mj_vel_adr;
+    int mj_actuator_id;
   };
 
   template <typename T>
