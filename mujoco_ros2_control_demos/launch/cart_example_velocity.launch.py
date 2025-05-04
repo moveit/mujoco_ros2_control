@@ -32,7 +32,7 @@ def generate_launch_description():
         parameters=[
             robot_description,
             controller_config_file,
-            {'mujoco_model_path':os.path.join(mujoco_ros2_control_demos_path, 'mujoco_models', 'test_cart.xml')}
+            {'mujoco_model_path':os.path.join(mujoco_ros2_control_demos_path, 'mujoco_models', 'test_cart_velocity.xml')}
         ]
     )
 

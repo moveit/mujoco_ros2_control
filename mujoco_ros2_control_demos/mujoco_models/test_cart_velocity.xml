@@ -1,0 +1,6 @@
+<mujoco>
+    <include file="test_cart.xml" />
+    <actuator>
+        <velocity name="slider_to_cart" joint="slider_to_cart" kv="5" />
+    </actuator>
+</mujoco>

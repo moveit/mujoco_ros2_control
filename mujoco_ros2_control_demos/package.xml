@@ -25,6 +25,7 @@
  <depend>imu_sensor_broadcaster</depend>
 
  <exec_depend>position_controllers</exec_depend>
+ <exec_depend>diff_drive_controller</exec_depend>
 
  <test_depend>ament_lint_auto</test_depend>
  <test_depend>ament_cmake_clang_format</test_depend>
