@@ -368,7 +368,7 @@ void MujocoSystem::register_sensors(
       sensor_data.torque.mj_sensor_index = mj_model_->sensor_adr[torque_sensor_id];
 
       ft_sensor_data_.push_back(sensor_data);
-      auto &last_sensor_data = ft_sensor_data_.at(sensor_index);
+      auto &last_sensor_data = ft_sensor_data_.back();
 
       for (const auto &state_if : sensor.state_interfaces)
       {
@@ -430,7 +430,8 @@ void MujocoSystem::register_sensors(
       sensor_data.linear_acceleration.mj_sensor_index = mj_model_->sensor_adr[accel_id];
 
       imu_sensor_data_.push_back(sensor_data);
-      auto &last_sensor_data = imu_sensor_data_.at(sensor_index);
+      auto &last_sensor_data = imu_sensor_data_.back();
+
 
       for (const auto &state_if : sensor.state_interfaces)
       {
