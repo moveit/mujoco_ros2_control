@@ -1,6 +1,0 @@
-<mujoco>
-    <include file="test_cart.xml" />
-    <actuator>
-        <position name="slider_to_cart" joint="slider_to_cart" kp="5" dampratio="1" />
-    </actuator>
-</mujoco>
