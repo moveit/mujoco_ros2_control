@@ -24,7 +24,7 @@
     </worldbody>
 
     <actuator>
-        <motor joint="camera_joint" ctrlrange="-1 1" gear="100"/>
+        <position name="camera_joint" joint="camera_joint" kp="5000" dampratio="1.0"/>
     </actuator>
 
 </mujoco>

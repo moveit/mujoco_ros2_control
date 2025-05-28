@@ -53,13 +53,13 @@ def generate_launch_description():
     )
 
     load_joint_state_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', '--use-sim-time',
              'joint_state_broadcaster'],
         output='screen'
     )
 
     load_position_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', '--use-sim-time',
              'position_controller'],
         output='screen'
     )
@@ -74,9 +74,11 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        node_mujoco_ros2_control,
+        node_robot_state_publisher,
         RegisterEventHandler(
             event_handler=OnProcessStart(
-                target_action=node_mujoco_ros2_control,
+                target_action=node_robot_state_publisher,
                 on_start=[load_joint_state_controller],
             )
         ),
@@ -86,7 +88,10 @@ def generate_launch_description():
                 on_exit=[load_position_controller],
             )
         ),
-        node_mujoco_ros2_control,
-        node_robot_state_publisher,
-        rviz_node,
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=load_position_controller,
+                on_exit=[rviz_node],
+            )
+        ),
     ])

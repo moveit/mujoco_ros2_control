@@ -25,4 +25,16 @@
     <contact>
         <exclude body1="finger_right" body2="finger_left" />
     </contact>
+    <actuator>
+        <position name="right_finger_joint" joint="right_finger_joint" kp="5" dampratio="1" />
+    </actuator>
+    <equality>
+        <joint joint1="right_finger_joint" joint2="left_finger_joint" polycoef="0 1 0 0 0" />
+    </equality>
+    <tendon>
+        <fixed name="mimic">
+            <joint joint="right_finger_joint" coef="0.5" />
+            <joint joint="left_finger_joint" coef="0.5" />
+        </fixed>
+    </tendon>
 </mujoco>

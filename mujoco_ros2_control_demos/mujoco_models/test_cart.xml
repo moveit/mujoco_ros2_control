@@ -25,4 +25,8 @@
     <contact>
         <exclude body1="slideBar" body2="cart" />
     </contact>
+    <actuator>
+        <position name="slider_to_cart_pos" joint="slider_to_cart" kp="5" dampratio="1" />
+        <velocity name="slider_to_cart_vel" joint="slider_to_cart" kv="5" />
+    </actuator>
 </mujoco>

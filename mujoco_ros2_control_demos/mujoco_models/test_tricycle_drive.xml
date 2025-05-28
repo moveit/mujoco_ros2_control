@@ -40,4 +40,8 @@
         <exclude body1="chassis" body2="wheel_front_link" />
         <exclude body1="steering_link" body2="wheel_front_link" />
     </contact>
+    <actuator>
+        <position name="steering_joint" joint="steering_joint" kp="5" dampratio="1" />
+        <velocity ctrllimited="true" ctrlrange="-5 5" name="traction_joint" joint="traction_joint"/>
+    </actuator>
 </mujoco>
