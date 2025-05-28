@@ -34,5 +34,5 @@
     <actuator>
         <velocity ctrllimited="true" ctrlrange="-5 5" name="left_wheel_joint" joint="left_wheel_joint"/>
         <velocity ctrllimited="true" ctrlrange="-5 5" name="right_wheel_joint" joint="right_wheel_joint"/>
-      </actuator>
+    </actuator>
 </mujoco>
