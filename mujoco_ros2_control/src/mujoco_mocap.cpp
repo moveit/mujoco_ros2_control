@@ -37,9 +37,8 @@ void MujocoMocap::update(mjModel *mujoco_model, mjData *mujoco_data)
   {
     // Update pose, twist, and acceleration data in global frame
     int body_id = mj_name2id(mujoco_model, mjOBJ_BODY, target.name.c_str());
-    mjtNum *pos = mujoco_data->xpos + 3 * mujoco_model->body_jntadr[body_id];
-    mjtNum *quat = mujoco_data->xquat + 4 * mujoco_model->body_jntadr[body_id];
-    mjtNum *vel = mujoco_data->qvel + mujoco_model->nv * mujoco_model->body_jntadr[body_id];
+    mjtNum *pos = mujoco_data->xpos + 3 * body_id;
+    mjtNum *quat = mujoco_data->xquat + 4 * body_id;
 
     // Fill in the pose message
     target.pose.pose.position.x = pos[0];
@@ -50,10 +49,7 @@ void MujocoMocap::update(mjModel *mujoco_model, mjData *mujoco_data)
     target.pose.pose.orientation.z = quat[2];
     target.pose.pose.orientation.w = quat[3];
 
-    // Fill in the twist message
-    target.twist.twist.linear.x = vel[0];
-    target.twist.twist.linear.y = vel[1];
-    target.twist.twist.linear.z = vel[2];
+    // TODO: Fill in the twist and acceleration messages
 
     // Publish messages
     auto time = node_->now();
@@ -77,11 +73,13 @@ void MujocoMocap::register_mocap_targets(const mjModel *mujoco_model)
 
   for (int i = 0; i < mujoco_model->nbody; ++i)
   {
-    if (mujoco_model->body_jntnum[i] == 0)  // Floating body
+    if (true)  // FIXME: Select target
     {
+      const char *target_name = mujoco_model->names + mujoco_model->name_bodyadr[i];
       MocapData target;
-      target.name = mujoco_model->names[mujoco_model->name_bodyadr[i]];
-      target.frame_name = target.name + "_frame";
+
+      target.name = target_name;
+      target.frame_name = target.name + "mocap_frame";
 
       // Initialize messages
       target.pose.header.frame_id = target.frame_name;
