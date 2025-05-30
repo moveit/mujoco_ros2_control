@@ -76,6 +76,7 @@ add_executable(mujoco_ros2_control
   src/mujoco_rendering.cpp
   src/mujoco_ros2_control.cpp
   src/mujoco_cameras.cpp
+  src/mujoco_mocap.cpp
 )
 ament_target_dependencies(mujoco_ros2_control ${THIS_PACKAGE_DEPENDS})
 target_link_libraries(mujoco_ros2_control ${MUJOCO_LIB} glfw)
