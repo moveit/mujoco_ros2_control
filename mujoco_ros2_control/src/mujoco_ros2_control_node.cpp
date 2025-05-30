@@ -22,6 +22,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "mujoco_ros2_control/mujoco_cameras.hpp"
+#include "mujoco_ros2_control/mujoco_mocap.hpp"
 #include "mujoco_ros2_control/mujoco_rendering.hpp"
 #include "mujoco_ros2_control/mujoco_ros2_control.hpp"
 
@@ -68,6 +69,12 @@ int main(int argc, const char **argv)
   RCLCPP_INFO_STREAM(
     node->get_logger(), "Mujoco ros2 controller has been successfully initialized !");
 
+  // initialize mujoco mocap
+  // TODO: Shoule be separated
+  auto mujoco_mocap = std::make_unique<mujoco_ros2_control::MujocoMocap>(node);
+  mujoco_mocap->init(mujoco_model);
+  RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco mocap has been successfully initialized !");
+
   // initialize mujoco visualization environment for rendering and cameras
   if (!glfwInit())
   {
@@ -97,9 +104,11 @@ int main(int argc, const char **argv)
 
     // Updating cameras at ~6 Hz
     // TODO(eholum): Break control and rendering into separate processes
+    // TODO: Mocap should be handled in a separate thread
     if (simstart - last_cam_update > 1.0 / 6.0)
     {
       cameras->update(mujoco_model, mujoco_data);
+      mujoco_mocap->update(mujoco_model, mujoco_data);
       last_cam_update = simstart;
     }
   }
