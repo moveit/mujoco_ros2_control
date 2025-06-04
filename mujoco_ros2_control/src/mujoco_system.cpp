@@ -432,7 +432,6 @@ void MujocoSystem::register_sensors(
       imu_sensor_data_.push_back(sensor_data);
       auto &last_sensor_data = imu_sensor_data_.back();
 
-
       for (const auto &state_if : sensor.state_interfaces)
       {
         if (state_if.name == "orientation.x")
