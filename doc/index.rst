@@ -81,6 +81,48 @@ An overview is available through the "camera" demo.
 
 For additional information refer to the ``mujoco_ros2_control_demos/mujoco_models`` for examples.
 
+Controller Options
+------------------
+The drivers support two modes of control, either wrapping Mujoco's actuation interface or wrapped PID control of joint interfaces.
+
+Mujoco's built-in controllers essentially provide PD control of the actuator's interface.
+For more information refer to the documentation in their `actuation model <https://mujoco.readthedocs.io/en/stable/computation/index.html#geactuation>`_ docs.
+To use their controllers, actuators must be added and tuned directly in the MJCF XML, as in many of the demo examples.
+No additional configuration is needed from the drivers side, as commands will be sent directly to the actuator's `ctrl` data.
+For example,
+
+.. code-block:: XML
+
+  <actuator>
+      <position name="slider_to_cart_pos" joint="slider_to_cart" kp="5" dampratio="1" />
+      <velocity name="slider_to_cart_vel" joint="slider_to_cart" kv="5" />
+  </actuator>
+
+To use the PID wrapper, users can omit the actuators from their MJCF descriptions, and instead specify gains directly in the ros2_control xacro.
+An example is provided in the `examples repo <https://github.com/moveit/mujoco_ros2_control_examples/blob/main/panda_resources/panda_moveit_config/config/panda.ros2_control.xacro>`_.
+In this case, we note that the `command_interface` _must_ be suffixed by `_pid`,
+
+.. code-block:: XML
+
+  <joint name="panda_joint1">
+      <xacro:if value="${ros2_control_hardware_type == 'mujoco'}">
+        <param name="position_kp">3000</param>
+        <param name="position_ki">1</param>
+        <param name="position_kd">100</param>
+        <param name="position_i_max">10000</param>
+        <command_interface name="position_pid"/>
+      </xacro:if>
+      <xacro:unless value="${ros2_control_hardware_type == 'mujoco'}">
+        <command_interface name="position"/>
+      </xacro:unless>
+      <state_interface name="position">
+        <param name="initial_value">${initial_positions['panda_joint1']}</param>
+      </state_interface>
+      <state_interface name="velocity">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+  </joint>
+
 Specify the location of Mujoco models and the controller configuration file
 ----------------------------------------------------------------------------
 You need to pass parameters for paths as shown in the following example.

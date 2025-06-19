@@ -42,7 +42,7 @@ hardware_interface::return_type MujocoSystem::read(
   {
     joint_state.position = mj_data_->qpos[joint_state.mj_pos_adr];
     joint_state.velocity = mj_data_->qvel[joint_state.mj_vel_adr];
-    joint_state.effort = mj_data_->qfrc_applied[joint_state.mj_vel_adr];
+    joint_state.effort = mj_data_->actuator_force[joint_state.mj_vel_adr];
   }
 
   // IMU Sensor data
@@ -114,7 +114,7 @@ hardware_interface::return_type MujocoSystem::write(
       }
       else
       {
-        mj_data_->qpos[joint_state.mj_pos_adr] = joint_state.position_command;
+        mj_data_->ctrl[joint_state.mj_actuator_id] = joint_state.position_command;
       }
     }
 
@@ -129,7 +129,7 @@ hardware_interface::return_type MujocoSystem::write(
       }
       else
       {
-        mj_data_->qvel[joint_state.mj_vel_adr] = joint_state.velocity_command;
+        mj_data_->ctrl[joint_state.mj_actuator_id] = joint_state.velocity_command;
       }
     }
 
@@ -184,12 +184,32 @@ void MujocoSystem::register_joints(
       continue;
     }
 
+    // Try to locate the matching actuator id for the joint, if available
+    int mujoco_actuator_id = -1;
+    for (int i = 0; i < mj_model_->nu; ++i)
+    {
+      // If it is the correct type and matches the joint id, we're done
+      if (
+        mj_model_->actuator_trntype[i] == mjTRN_JOINT &&
+        mj_model_->actuator_trnid[2 * i] == mujoco_joint_id)
+      {
+        mujoco_actuator_id = i;
+        break;
+      }
+    }
+    if (mujoco_actuator_id == -1)
+    {
+      // This isn't a failure the joint just won't be controllable
+      RCLCPP_WARN_STREAM(logger_, "No actuator found for joint: " << joint.name);
+    }
+
     // save information in joint_states_ variable
     JointState joint_state;
     joint_state.name = joint.name;
     joint_state.mj_joint_type = mj_model_->jnt_type[mujoco_joint_id];
     joint_state.mj_pos_adr = mj_model_->jnt_qposadr[mujoco_joint_id];
     joint_state.mj_vel_adr = mj_model_->jnt_dofadr[mujoco_joint_id];
+    joint_state.mj_actuator_id = mujoco_actuator_id;
 
     joint_states_.at(joint_index) = joint_state;
     JointState &last_joint_state = joint_states_.at(joint_index);
