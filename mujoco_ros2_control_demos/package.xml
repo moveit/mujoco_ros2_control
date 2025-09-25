@@ -4,10 +4,11 @@
    schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
  <name>mujoco_ros2_control_demos</name>
- <version>0.1.0</version>
+ <version>0.1.1</version>
  <description>mujoco_ros2_control_demos</description>
 
  <maintainer email="sangteak601@gmail.com">Sangtaek Lee</maintainer>
+ <maintainer email="ogordillo@miners.utep.edu">Orlando Gordillo</maintainer>
 
  <license>MIT</license>
 
@@ -24,7 +25,12 @@
  <depend>force_torque_sensor_broadcaster</depend>
  <depend>imu_sensor_broadcaster</depend>
 
+ <exec_depend>ros2launch</exec_depend>
+ <exec_depend>rclpy</exec_depend>
+ <exec_depend>sensor_msgs</exec_depend>
+ <exec_depend>trajectory_msgs</exec_depend>
  <exec_depend>position_controllers</exec_depend>
+ 
 
  <test_depend>ament_lint_auto</test_depend>
  <test_depend>ament_cmake_clang_format</test_depend>

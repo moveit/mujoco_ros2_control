@@ -34,6 +34,12 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}/
 )
 
+install(PROGRAMS
+  scripts/rl_controller_agent.py
+  scripts/rl_controller_PID.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 add_executable(example_position examples/example_position.cpp)
 ament_target_dependencies(example_position ${THIS_PACKAGE_DEPENDS})
 

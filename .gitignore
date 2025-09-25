@@ -9,3 +9,7 @@ log/
 
 # mujoco log
 **/MUJOCO_LOG.TXT
+
+# python cache
+__pycache__/
+*.pyc

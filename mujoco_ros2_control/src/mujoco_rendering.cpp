@@ -21,6 +21,7 @@
 #include "mujoco_ros2_control/mujoco_rendering.hpp"
 
 #include "sensor_msgs/image_encodings.hpp"
+#include "mujoco/mujoco.h"
 
 namespace mujoco_ros2_control
 {
@@ -47,10 +48,16 @@ MujocoRendering::MujocoRendering()
 {
 }
 
-void MujocoRendering::init(mjModel *mujoco_model, mjData *mujoco_data)
+void MujocoRendering::init(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData* mujoco_data)
 {
+  node_ = node;
   mj_model_ = mujoco_model;
   mj_data_ = mujoco_data;
+
+  // init GLFW
+  if (!glfwInit()) {
+    mju_error("Could not initialize GLFW");
+  }
 
   // create window, make OpenGL context current, request v-sync
   glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
@@ -63,6 +70,8 @@ void MujocoRendering::init(mjModel *mujoco_model, mjData *mujoco_data)
   mjv_defaultOption(&mjv_opt_);
   mjv_defaultScene(&mjv_scn_);
   mjr_defaultContext(&mjr_con_);
+
+  mjv_defaultPerturb(&mjv_pert_);
 
   mjv_cam_.type = mjCAMERA_FREE;
   mjv_cam_.distance = 8.;
@@ -80,6 +89,13 @@ void MujocoRendering::init(mjModel *mujoco_model, mjData *mujoco_data)
   // This might cause tearing, but having RViz and the renderer both open can
   // wreak havoc on the rendering process.
   glfwSwapInterval(0);
+
+  // Pole Id for balance_bot demo
+  pole_body_id_ = mj_name2id(mj_model_, mjOBJ_BODY, "pole");
+  if (pole_body_id_ == -1)
+  {
+      RCLCPP_WARN(node_->get_logger(), "Could not find a body named 'pole' in the model. Mouse perturbation will not work.");
+  }
 }
 
 bool MujocoRendering::is_close_flag_raised() { return glfwWindowShouldClose(window_); }
@@ -151,7 +167,7 @@ void MujocoRendering::keyboard_callback_impl(
 }
 
 void MujocoRendering::mouse_button_callback_impl(
-  GLFWwindow *window, int /* button */, int /* act */, int /* mods */)
+  GLFWwindow *window, int button , int act , int mods)
 {
   // update button state
   button_left_ = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
@@ -160,6 +176,53 @@ void MujocoRendering::mouse_button_callback_impl(
 
   // update mouse position
   glfwGetCursorPos(window, &lastx_, &lasty_);
+
+  // If Pole is clicked handler for balance_bot demo
+  if (button == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_PRESS)
+  {
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    int geom_id, flex_id, skin_id;
+    mjtNum selpnt[3];
+    int body_id = mjv_select(
+        mj_model_, mj_data_, &mjv_opt_,
+        static_cast<double>(width) / height,
+        lastx_ / width, (height - lasty_) / height,
+        &mjv_scn_, selpnt, &geom_id, &flex_id, &skin_id);
+
+    if (body_id == pole_body_id_)
+    {
+      RCLCPP_INFO(node_->get_logger(), "Applying force to pole!");
+      const double force_magnitude = 5.0;
+
+      mjtNum forward[3];
+      double az = mjv_cam_.azimuth * M_PI / 180.0;
+      double el = mjv_cam_.elevation * M_PI / 180.0;
+      forward[0] = cos(el) * sin(az);
+      forward[1] = -cos(el) * cos(az);
+      forward[2] = sin(el);
+      mju_normalize3(forward);
+
+      mjtNum force[3] = {force_magnitude * forward[0],
+                         force_magnitude * forward[1],
+                         force_magnitude * forward[2]};
+
+      double* xfrc = mj_data_->xfrc_applied + 6 * pole_body_id_;
+      const int tip_site_id = mj_name2id(mj_model_, mjOBJ_SITE, "tip");
+      mjtNum* tip_pos = mj_data_->site_xpos + 3 * tip_site_id;
+      mjtNum* com_pos = mj_data_->xipos + 3 * pole_body_id_;
+      mjtNum tip_offset[3];
+      mju_sub3(tip_offset, tip_pos, com_pos);
+      mjtNum torque[3];
+      mju_cross(torque, tip_offset, force);
+
+      for(int i=0; i<3; ++i) {
+          xfrc[i] = force[i];
+          xfrc[i+3] = torque[i];
+      }
+    }
+  }
 }
 
 void MujocoRendering::mouse_move_callback_impl(GLFWwindow *window, double xpos, double ypos)

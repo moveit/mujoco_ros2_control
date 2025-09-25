@@ -1,0 +1,37 @@
+<mujoco model="balance_bot">
+  <compiler angle="radian" inertiafromgeom="true"/>
+  <option timestep="0.002" gravity="0 0 -9.81"/>
+
+  <worldbody>
+    <light diffuse=".5 .5 .5" pos="0 0 3" dir="0 0 -1"/>
+    <geom type="plane" size="5 5 0.1" rgba=".9 .9 .9 1"/>
+
+    <body name="cart" pos="0 0 0.1">
+      <joint name="slider" type="slide" pos="0 0 0" axis="1 0 0" limited="false"/>
+      <geom type="cylinder" size="0.05 0.05" rgba="0.8 0.2 0.2 1" mass="1.0"/>
+      <site name="cart_site" pos="0 0 0" size="0.01"/>
+
+      <body name="pole" pos="0 0 0">
+        <joint name="hinge" type="hinge" pos="0 0 0" axis="0 1 0"/>
+        <geom type="capsule" fromto="0 0 0.02 0 0 0.52" size="0.04" rgba="0.2 0.8 0.2 1" mass="0.1"/>
+        <site name="tip" pos="0 0 0.5" size="0.01"/>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="slide_motor" joint="slider" gear="10" ctrllimited="true" ctrlrange="-50.0 50.0"/>
+  </actuator>
+
+  <sensor>
+    <jointpos name="slider_pos" joint="slider"/>
+    <jointvel name="slider_vel" joint="slider"/>
+    <jointpos name="hinge_pos" joint="hinge"/>
+    <jointvel name="hinge_vel" joint="hinge"/>
+  </sensor>
+
+  <keyframe>
+    <key name="start" qpos="0.0 0.0"/>
+  </keyframe>
+  
+</mujoco>

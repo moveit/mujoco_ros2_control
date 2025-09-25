@@ -35,18 +35,22 @@
 
 namespace mujoco_ros2_control
 {
+class MJResourceManager;
 class MujocoRos2Control
 {
 public:
-  MujocoRos2Control(rclcpp::Node::SharedPtr &node, mjModel *mujoco_model, mjData *mujoco_data);
+  MujocoRos2Control(rclcpp::Node::SharedPtr & node, rclcpp::NodeOptions cm_node_option, mjModel* mujoco_model, mjData* mujoco_data);
   ~MujocoRos2Control();
   void init();
+  void pre_update();
   void update();
+  void update_with_step();
 
 private:
   void publish_sim_time(rclcpp::Time sim_time);
-  std::string get_robot_description();
+
   rclcpp::Node::SharedPtr node_;
+  rclcpp::NodeOptions cm_node_option_;
   mjModel *mj_model_;
   mjData *mj_data_;
 
@@ -54,10 +58,12 @@ private:
   std::shared_ptr<pluginlib::ClassLoader<MujocoSystemInterface>> robot_hw_sim_loader_;
 
   std::shared_ptr<controller_manager::ControllerManager> controller_manager_;
-  rclcpp::Executor::SharedPtr cm_executor_;
+  rclcpp::executors::MultiThreadedExecutor::SharedPtr cm_executor_;
   std::thread cm_thread_;
   bool stop_cm_thread_;
-  rclcpp::Duration control_period_;
+  rclcpp::Time sim_time_ros_;
+  rclcpp::Duration sim_period_{1,0};
+  rclcpp::Duration control_period_{1,0};
 
   rclcpp::Time last_update_sim_time_ros_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_publisher_;

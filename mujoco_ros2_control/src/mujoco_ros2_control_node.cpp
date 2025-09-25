@@ -36,6 +36,14 @@ int main(int argc, const char **argv)
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared(
     "mujoco_ros2_control_node",
     rclcpp::NodeOptions().automatically_declare_parameters_from_overrides(true));
+  rclcpp::NodeOptions cm_node_options = controller_manager::get_cm_node_options();
+  std::vector<std::string> node_arguments = cm_node_options.arguments();
+  for(int i = 1; i < argc; ++i)
+  {
+    if(node_arguments.empty() && std::string(argv[i]) != "--ros-args") continue;
+    node_arguments.emplace_back(argv[i]);
+  }
+  cm_node_options.arguments(node_arguments);
 
   RCLCPP_INFO_STREAM(node->get_logger(), "Initializing mujoco_ros2_control node...");
   auto model_path = node->get_parameter("mujoco_model_path").as_string();
@@ -61,8 +69,8 @@ int main(int argc, const char **argv)
   // make data
   mujoco_data = mj_makeData(mujoco_model);
 
-  // initialize mujoco control
-  auto mujoco_control = mujoco_ros2_control::MujocoRos2Control(node, mujoco_model, mujoco_data);
+  // Updated Inits of for Jazzy compatibility
+  auto mujoco_control = mujoco_ros2_control::MujocoRos2Control(node, cm_node_options, mujoco_model, mujoco_data);
 
   mujoco_control.init();
   RCLCPP_INFO_STREAM(
@@ -74,7 +82,7 @@ int main(int argc, const char **argv)
     mju_error("Could not initialize GLFW");
   }
   auto rendering = mujoco_ros2_control::MujocoRendering::get_instance();
-  rendering->init(mujoco_model, mujoco_data);
+  rendering->init(node, mujoco_model, mujoco_data);
   RCLCPP_INFO_STREAM(node->get_logger(), "Mujoco rendering has been successfully initialized !");
 
   auto cameras = std::make_unique<mujoco_ros2_control::MujocoCameras>(node);
@@ -91,7 +99,8 @@ int main(int argc, const char **argv)
     mjtNum simstart = mujoco_data->time;
     while (mujoco_data->time - simstart < 1.0 / 60.0)
     {
-      mujoco_control.update();
+      mujoco_control.pre_update();
+      mujoco_control.update_with_step();
     }
     rendering->update();
 
@@ -106,10 +115,12 @@ int main(int argc, const char **argv)
 
   rendering->close();
   cameras->close();
+  delete(rendering);
 
   // free MuJoCo model and data
   mj_deleteData(mujoco_data);
   mj_deleteModel(mujoco_model);
+  RCLCPP_INFO(node->get_logger(), "Mujoco Sim Stop ...");
 
   return 1;
 }

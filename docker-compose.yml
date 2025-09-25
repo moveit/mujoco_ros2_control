@@ -1,0 +1,26 @@
+services:
+  mujoco_ros2:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    image: mujoco_ros2:latest
+    container_name: mujoco_ros2
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./mujoco_ros2_control:/root/ros2_ws/src/mujoco_ros2_control
+      - ./mujoco_ros2_control_demos:/root/ros2_ws/src/mujoco_ros2_control_demos
+    network_mode: "host"
+    ipc: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: tail -f /dev/null

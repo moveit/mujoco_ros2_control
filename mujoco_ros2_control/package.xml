@@ -8,6 +8,7 @@
   <description>mujoco_ros2_control</description>
 
   <maintainer email="sangteak601@gmail.com">Sangtaek Lee</maintainer>
+  <maintainer email="ogordillo@miners.utep.edu">Orlando Gordillo</maintainer>
 
   <license>MIT</license>
 

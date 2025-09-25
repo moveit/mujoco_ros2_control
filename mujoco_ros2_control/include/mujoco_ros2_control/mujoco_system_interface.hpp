@@ -33,11 +33,11 @@ using CallbackReturn = rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface
 class MujocoSystemInterface : public hardware_interface::SystemInterface
 {
 public:
-  virtual bool init_sim(
-    mjModel *mujoco_model, mjData *mujoco_data, const urdf::Model &urdf_model,
-    const hardware_interface::HardwareInfo &hardware_info) = 0;
+  virtual bool init_sim(rclcpp::Node::SharedPtr & node, mjModel* mujoco_model, mjData *mujoco_data,
+    const urdf::Model& urdf_model, const hardware_interface::HardwareInfo & hardware_info) = 0;
 
 protected:
+  rclcpp::Node::SharedPtr node_;
 };
 }  // namespace mujoco_ros2_control
 
