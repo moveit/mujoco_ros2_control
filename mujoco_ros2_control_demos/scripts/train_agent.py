@@ -50,28 +50,28 @@ def env_reset(mjx_model, rng):
     """
     # Split the random key for subsequent use.
     rng, key = jax.random.split(rng)
-    
+
     # Initialize joint positions (qpos) to zero.
     qpos = jnp.zeros(mjx_model.nq)
-    
+
     # Generate a small random nudge for the pole's starting angle.
     nudge = jax.random.uniform(key, (), minval=-0.05, maxval=0.05)
-    
+
     # Apply the nudge to the second joint (the pole's hinge).
     qpos = qpos.at[1].set(nudge)
-    
+
     # Initialize joint velocities (qvel) to zero.
     qvel = jnp.zeros(mjx_model.nv)
-    
+
     # Create the initial MJX data structure.
     data = mjx.make_data(mjx_model)
-    
+
     # Update the data structure with the new initial qpos and qvel.
     data = data.replace(qpos=qpos, qvel=qvel)
-    
+
     # The observation is the concatenation of joint positions and velocities.
     obs = jnp.concatenate([data.qpos, data.qvel])
-    
+
     return data, obs
 
 def env_step(mjx_model, data, action, rng, config):
@@ -99,57 +99,57 @@ def env_step(mjx_model, data, action, rng, config):
     """
     # Clip the action to prevent excessively large forces.
     action = jnp.clip(action, -50.0, 50.0)
-    
+
     # Split the random key for generating the external force.
     rng, key = jax.random.split(rng)
-    
+
     # Define the magnitude of the random external force.
     force_magnitude = 0.5
-    
+
     # Generate a random 3D force vector.
     push = jax.random.uniform(key, (3,), minval=-force_magnitude, maxval=force_magnitude)
-    
+
     # Initialize the external force array (for all bodies).
     xfrc = jnp.zeros((mjx_model.nbody, 6)) # 6D: 3 for force, 3 for torque
-    
+
     # Apply the random force to the pole (body index 2).
     xfrc = xfrc.at[2, 0:3].set(push)
-    
+
     # Update the MJX data with the agent's action (control) and the external force.
     data = data.replace(ctrl=action, xfrc_applied=xfrc)
-    
+
     # Perform one physics step.
     data = mjx.step(mjx_model, data)
-    
+
     # Construct the next observation from the new state.
     obs = jnp.concatenate([data.qpos, data.qvel])
-    
+
     # Extract cart position and pole angle for reward calculation.
     cart_pos = data.qpos[0]
     pole_angle = data.qpos[1]
-    
+
     # Reward for keeping the pole upright. `cos(angle)` is 1 when upright (0 rad), -1 when upside down.
     # We scale it to be in the range [0, 1].
     reward_upright = (1 + jnp.cos(pole_angle)) / 2
-    
+
     # Reward for keeping the cart centered at the origin.
     reward_centered = config["centered_reward_weight"] * (1.0 - jnp.abs(cart_pos))
-    
+
     # Cost for using large actions to encourage energy efficiency.
     action_cost = config["action_cost_weight"] * jnp.sum(jnp.square(action))
-    
+
     # The total reward is a combination of the above components.
     reward = reward_upright - reward_centered - action_cost
-    
+
     # Termination condition: if the pole falls over too far.
     done = jnp.where(jnp.abs(pole_angle) > 0.5, 1.0, 0.0)
-    
+
     # Termination condition: if the cart moves too far from the center.
     done = jnp.where(jnp.abs(cart_pos) > 2.5, 1.0, done)
-    
+
     # If the episode is done, the reward for this step is zeroed out.
     reward = reward * (1.0 - done)
-    
+
     return data, obs, reward, done
 
 
@@ -177,18 +177,18 @@ class ActorCritic(nn.Module):
         x = nn.tanh(x)
         x = nn.Dense(256, kernel_init=nn.initializers.orthogonal(2))(x)
         x = nn.tanh(x)
-        
+
         # Actor head: outputs the mean of the action distribution.
         # Small initialization weight for the final layer is a common practice.
         mean = nn.Dense(self.action_dim, kernel_init=nn.initializers.orthogonal(0.01))(x)
-        
+
         # Actor head: outputs the log standard deviation of the action distribution.
         # This is a learnable parameter, independent of the input state.
         log_std = self.param('log_std', nn.initializers.zeros, (self.action_dim,))
-        
+
         # Critic head: outputs the estimated state value.
         value = nn.Dense(1, kernel_init=nn.initializers.orthogonal(1))(x)
-        
+
         # Squeeze the last dimension of the value output to get a scalar.
         return mean, log_std, value.squeeze(-1)
 
@@ -210,16 +210,16 @@ def train(config):
     mj_model = mujoco.MjModel.from_xml_path(config["model_path"])
     # Compile the model for JAX (MJX).
     mjx_model = mjx.put_model(mj_model)
-    
+
     # --- JAX Function Transformations ---
     # `functools.partial` pre-fills some arguments of the functions.
     partial_reset = functools.partial(env_reset, mjx_model)
     partial_step = functools.partial(env_step, mjx_model, config=config)
-    
+
     # `jax.vmap` vectorizes the functions to run them over many environments in parallel.
     vmap_reset = jax.vmap(partial_reset)
     vmap_step = jax.vmap(partial_step)
-    
+
     # `jax.jit` just-in-time compiles the functions for maximum performance.
     jit_reset = jax.jit(vmap_reset)
     jit_step = jax.jit(vmap_step)
@@ -227,30 +227,30 @@ def train(config):
     # --- Initialization ---
     # Initialize the Actor-Critic network.
     network = ActorCritic(action_dim=mjx_model.nu)
-    
+
     # Initialize the Adam optimizer.
     optimizer = optax.adam(config["learning_rate"])
-    
+
     # Initialize the main random number generator key.
     rng = jax.random.PRNGKey(0)
-    
+
     # Create a dummy observation to initialize the network parameters.
     rng, key = jax.random.split(rng)
     init_obs = jnp.zeros((config["num_envs"], mjx_model.nq + mjx_model.nv))
     network_params = network.init(key, init_obs)['params']
-    
+
     # Initialize the optimizer state.
     opt_state = optimizer.init(network_params)
-    
+
     # Create separate random keys for each parallel environment.
     rngs = jax.random.split(rng, config["num_envs"])
-    
+
     # Reset all parallel environments to get the initial states and observations.
     data, obs = jit_reset(rngs)
-    
+
     print("Starting training...")
     start_time = time.time()
-    
+
     # Calculate the total number of update steps.
     num_updates = config["total_timesteps"] // (config["num_envs"] * config["unroll_length"])
 
@@ -261,25 +261,25 @@ def train(config):
         for _ in range(config["unroll_length"]):
             # Split RNG key for action sampling and environment stepping.
             rng, key, step_key = jax.random.split(rng, 3)
-            
+
             # Get policy and value predictions from the network.
             mean, log_std, value = network.apply({'params': network_params}, obs)
-            
+
             # Sample an action from the policy's Gaussian distribution.
             std = jnp.exp(log_std)
             action = mean + jax.random.normal(key, shape=mean.shape) * std
-            
+
             # Calculate the log probability of the sampled action.
             # This is needed for the PPO loss calculation.
             log_prob = -0.5 * (((action - mean) / std)**2 + 2 * jnp.log(std) + jnp.log(2 * jnp.pi)).sum(-1)
-            
+
             # Step the parallel environments.
             step_rngs = jax.random.split(step_key, config["num_envs"])
             next_data, next_obs, reward, done = jit_step(data, action, step_rngs)
-            
+
             # Store the transition in the trajectory buffer.
             trajectory.append((obs, action, reward, done, value, log_prob))
-            
+
             # Update the state for the next iteration.
             data, obs = next_data, next_obs
 
@@ -299,16 +299,16 @@ def train(config):
             advantages_list.append(gae)
             # The value of the current state becomes the 'last_val' for the previous timestep.
             last_val = value_t
-            
+
         # Reverse the list of advantages to match the trajectory order and stack into a JAX array.
         advantages = jnp.stack(advantages_list[::-1])
-        
+
         # Stack all other trajectory data into JAX arrays.
         traj_obs, traj_actions, _, _, traj_values, traj_log_probs = [jnp.stack(x) for x in zip(*trajectory)]
-        
+
         # Calculate returns (target values for the critic) by adding advantages to the values.
         traj_returns = advantages + traj_values
-        
+
         # --- PPO Update Phase ---
         def update_epoch(carry, _):
             """
@@ -317,33 +317,33 @@ def train(config):
             """
             params, opt_state, rng_epoch = carry
             rng_epoch, key_epoch = jax.random.split(rng_epoch)
-            
+
             total_batch_size = config["num_envs"] * config["unroll_length"]
             # Generate a random permutation to shuffle the data for each epoch.
             permutation = jax.random.permutation(key_epoch, total_batch_size)
-            
+
             def loss_fn(params_update):
                 """Calculates the PPO loss for a batch of data."""
                 # Flatten the trajectory data from [unroll_length, num_envs, ...] to [total_batch_size, ...].
                 flat_obs, flat_actions = traj_obs.reshape((total_batch_size, -1)), traj_actions.reshape((total_batch_size, -1))
                 flat_advantages, flat_returns, flat_log_probs = advantages.reshape(-1), traj_returns.reshape(-1), traj_log_probs.reshape(-1)
-                
+
                 # Get network outputs for the shuffled observations.
                 mean, log_std, value = network.apply({'params': params_update}, flat_obs[permutation])
-                
+
                 # Calculate the log probability of actions from the trajectory under the *current* policy.
                 new_log_prob = -0.5 * (((flat_actions[permutation] - mean) / jnp.exp(log_std))**2 + 2 * log_std + jnp.log(2 * jnp.pi)).sum(-1)
-                
+
                 # Calculate the importance sampling ratio.
                 ratio = jnp.exp(new_log_prob - flat_log_probs[permutation])
-                
+
                 # PPO's clipped surrogate objective for the actor.
                 clip_adv = jnp.clip(ratio, 1 - config["clip_coef"], 1 + config["clip_coef"]) * flat_advantages[permutation]
                 actor_loss = -jnp.minimum(ratio * flat_advantages[permutation], clip_adv).mean()
-                
+
                 # Mean squared error for the critic (value function).
                 critic_loss = ((value - flat_returns[permutation])**2).mean()
-                
+
                 # Total loss is a weighted sum of actor and critic losses.
                 return actor_loss + config["vf_coef"] * critic_loss
 
@@ -353,14 +353,14 @@ def train(config):
             updates, opt_state = optimizer.update(grads, opt_state)
             # Apply the updates to the network parameters.
             params = optax.apply_updates(params, updates)
-            
+
             return (params, opt_state, rng_epoch), None
-        
+
         # Run the update over multiple epochs using `jax.lax.scan` for efficiency.
         (network_params, opt_state, rng), _ = jax.lax.scan(
-            update_epoch, 
-            (network_params, opt_state, rng), 
-            None, 
+            update_epoch,
+            (network_params, opt_state, rng),
+            None,
             length=config["num_update_epochs"]
         )
 
@@ -380,10 +380,10 @@ def train(config):
 if __name__ == '__main__':
     # Define the root directory for model and policy paths.
     workspace_root = "/root/ros2_ws"
-    
+
     # Print the default JAX backend (e.g., 'gpu', 'cpu', 'tpu').
-    print(f"JAX backend: {jax.default_backend()}") 
-    
+    print(f"JAX backend: {jax.default_backend()}")
+
     # Configuration dictionary for all hyperparameters.
     config = {
         # PPO Hyperparameters
@@ -396,16 +396,16 @@ if __name__ == '__main__':
         "gae_lambda": 0.95,         # GAE lambda parameter
         "clip_coef": 0.2,           # PPO clipping coefficient
         "vf_coef": 0.5,             # Value function loss coefficient
-        
+
         # Environment/Reward Hyperparameters
         "action_repeat": 4,         # (Note: Not used in this version of env_step)
         "centered_reward_weight": 0.1,
         "action_cost_weight": 0.001,
-        
+
         # File Paths
         "model_path": os.path.join(workspace_root, 'src/mujoco_ros2_control_demos/mujoco_models/balance_bot.xml'),
         "save_path": os.path.join(workspace_root, "src/mujoco_ros2_control_demos/mujoco_models/balance_bot_policy_mjx")
     }
-    
+
     # Start the training process.
     train(config)

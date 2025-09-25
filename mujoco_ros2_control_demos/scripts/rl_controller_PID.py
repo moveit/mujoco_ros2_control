@@ -26,7 +26,7 @@ class RLControllerNode(Node):
         #     10
         # )
         self.get_logger().info('RL Controller Node has been started.')
-        self.policy = self.load_policy() 
+        self.policy = self.load_policy()
 
     def load_policy(self):
         self.get_logger().info('Placeholder policy loaded.')
@@ -56,11 +56,11 @@ class RLControllerNode(Node):
     def send_command(self, force_command):
         trajectory = JointTrajectory()
         trajectory.joint_names = ['slider']
-        
+
         point = JointTrajectoryPoint()
         current_pos = 0.0
-        target_pos = current_pos + force_command * 0.01 
-        
+        target_pos = current_pos + force_command * 0.01
+
         point.positions = [target_pos]
         point.time_from_start.sec = 0
         point.time_from_start.nanosec = 50000000 # 50ms

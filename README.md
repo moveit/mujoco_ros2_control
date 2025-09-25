@@ -6,7 +6,12 @@
 
 This repository contains a ROS2 control package for Mujoco simulation, offering the `MujocoSystem` plugin to integrate `ros2_control` with Mujoco. Additionally, it includes a node responsible for initializing the plugin, Mujoco rendering, and the simulation.
 
-New Demo Application for Mujoco Warp GPU Accelerated Physics Engine and MJX GPU Accelerated Machine Learning
+## Mujoco/ROS2 GPU Accelerated Simulations:
+This version now includes a demo for GPU Acceleration.
+
+- Mujoco: OpenGL GPU accelerated graphics
+- Mujoco Warp: GPU accelerated physics engine
+- MJX (JAX): GPU accelerated machine learning
 
 ## Installation Guide
 

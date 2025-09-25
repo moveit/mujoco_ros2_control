@@ -175,7 +175,7 @@ void MujocoRos2Control::update()
     last_update_sim_time_ros_ = sim_time_ros_;
   }
   mju_zero(mj_data_->xfrc_applied, 6 * mj_model_->nbody);
-  
+
   // use same time as for read and update call - this is how it is done in ros2_control_node
   controller_manager_->write(sim_time_ros_, sim_period_);
 }

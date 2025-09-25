@@ -54,9 +54,12 @@ repos:
         language: system
         exclude: '.*(conf\.py|launch\.py)$'
 
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.44.0
+  - repo: local
     hooks:
-    - id: markdownlint
-      # Ignore line length checks
-      args: ["--disable", "MD013", "--"]
+      - id: markdownlint
+        name: markdownlint
+        entry: markdownlint
+        language: system
+        types: [markdown]
+        # Ignore line length checks
+        args: ["--disable", "MD013", "--"]

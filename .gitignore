@@ -13,3 +13,6 @@ log/
 # python cache
 __pycache__/
 *.pyc
+
+# RL model folder
+mujoco_ros2_control_demos/mujoco_models/balance_bot_policy_mjx/

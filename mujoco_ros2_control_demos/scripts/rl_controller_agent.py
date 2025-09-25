@@ -42,7 +42,7 @@ class RLControllerNode(Node):
         self.policy_params = None
         workspace_root = "/root/ros2_ws"
         policy_path = os.path.join(workspace_root, "src/balance_bot_demo/models/balance_bot_policy_mjx")
-        
+
         try:
             self.network = ActorCritic(action_dim=1)
             checkpointer = ocp.PyTreeCheckpointer()
@@ -67,7 +67,7 @@ class RLControllerNode(Node):
                 msg.velocity[slider_idx],
                 msg.velocity[hinge_idx]
             ])
-            
+
             mean, _, _ = self.inference_fn(self.policy_params, observation)
             force = float(mean[0])
             force = max(-50.0, min(50.0, force))

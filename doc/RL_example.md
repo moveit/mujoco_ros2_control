@@ -36,4 +36,3 @@ This will start the sim. There is a mouse input coded into mujoco_ros2_control/s
 
 ### Documentation
 Read the (Mujoco Open Source documentation / API)[https://mujoco.readthedocs.io/en/stable/APIreference/index.html]
-

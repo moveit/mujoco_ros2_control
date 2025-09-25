@@ -10,7 +10,7 @@ def generate_launch_description():
     pkg_share = get_package_share_directory('mujoco_ros2_control_demos')
     mujoco_model_path = os.path.join(pkg_share, 'mujoco_models', 'balance_bot.xml')
     controller_config_path = os.path.join(pkg_share, 'config', 'balance_bot_controllers.yaml')
-    
+
     xacro_file = os.path.join(pkg_share, 'urdf', 'balance_bot.xacro.urdf')
     doc = xacro.parse(open(xacro_file))
     xacro.process_doc(doc)
@@ -22,12 +22,12 @@ def generate_launch_description():
         executable='mujoco_ros2_control',
         parameters=[
             robot_description,
-            controller_config_path, 
+            controller_config_path,
             {'mujoco_model_path': mujoco_model_path},
         ],
         output='screen'
     )
-    
+
     # Robot State Publisher Node
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
@@ -51,7 +51,7 @@ def generate_launch_description():
     #     name='rl_controller',
     #     output='screen'
     # )
-    
+
     # Load controllers on startup
     load_joint_state_broadcaster = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'joint_state_broadcaster'],
