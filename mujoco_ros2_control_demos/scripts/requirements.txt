@@ -6,3 +6,4 @@ jaxlib==0.7.2
 orbax-checkpoint==0.11.25
 warp-lang==1.9.0
 etils==1.13.0
+pre-commit==4.3.0

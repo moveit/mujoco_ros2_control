@@ -12,6 +12,7 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=all
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./.pre-commit-config.yaml:/root/ros2_ws/src/pre-commit-config.yaml
       - ./mujoco_ros2_control:/root/ros2_ws/src/mujoco_ros2_control
       - ./mujoco_ros2_control_demos:/root/ros2_ws/src/mujoco_ros2_control_demos
     network_mode: "host"

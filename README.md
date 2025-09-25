@@ -6,7 +6,8 @@
 
 This repository contains a ROS2 control package for Mujoco simulation, offering the `MujocoSystem` plugin to integrate `ros2_control` with Mujoco. Additionally, it includes a node responsible for initializing the plugin, Mujoco rendering, and the simulation.
 
-## Mujoco/ROS2 GPU Accelerated Simulations:
+## Mujoco/ROS2 GPU Accelerated Simulations
+
 This version now includes a demo for GPU Acceleration.
 
 - Mujoco: OpenGL GPU accelerated graphics
@@ -24,13 +25,12 @@ Make sure you have the following software installed if you are running on the lo
 - [ROS](https://docs.ros.org/)
 - [Mujoco](https://mujoco.org/)
 
-
 ### NVIDIA GPU Acceleration
+
 - Follow Nvidia instructions to install the [Nvidia Container Tool Kit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#setting-up-nvidia-container-toolkit)
 - ```sudo nvidia-ctk runtime configure --runtime=docker```
 - Restart WSL/Docker
-    - Close WSL, Exit Docker from sys tray icon. in a Powershell: ```wsl --shutdown``` 
-
+  - Close WSL, Exit Docker from sys tray icon. in a Powershell: ```wsl --shutdown```
 
 ### Package Install
 
