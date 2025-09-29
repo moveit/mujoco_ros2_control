@@ -1,6 +1,6 @@
 <mujoco>
     <compiler angle="radian" />
-	<option gravity="0 0 -9.81">
+	<option gravity="0 0 -9.81" timestep="0.002">
 		<flag contact="enable" />
 	</option>
 	<worldbody>
@@ -26,6 +26,40 @@
                 <inertial pos="0 0 0" mass="0.005" diaginertia="0.1 0.1 0.1" />
             </body>
         </body>
+
+
+    <body name="ball1" pos="0.5 0.0 1.4">
+      <freejoint/>
+      <geom type="sphere" name="ball1" size="0.033" condim="3"
+       friction="1 .03 .003" rgba="0 0.6 0 1" contype="1" conaffinity="1" solref="0.01 1" density="600"/>
+    </body>
+    <body name="ball2" pos="0.5 0.2 1.8">
+      <freejoint/>
+      <geom type="sphere" name="ball2" size="0.033" condim="3"
+       friction="1 .03 .003" rgba="0.6 0.6 0 1" contype="1" conaffinity="1" solref="0.01 1" density="600"/>
+    </body>
+    <body name="ball3" pos="0.5 0.5 1.9">
+      <freejoint/>
+      <geom type="sphere" name="ball3" size="0.033" condim="3"
+       friction="1 .03 .003" rgba="0.0 0.2 0.7 1" contype="1" conaffinity="1" solref="0.01 1" density="600"/>
+    </body>
+    <body name="cylinder1" pos="0.51 -0.32 1.1" euler="0 1.5708 0">
+      <freejoint/>
+      <geom type="cylinder" name="cylinder1" size="0.032 0.027 0.01" condim="3"
+        rgba="0 0.7 0.7 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
+    </body>
+    <body name="cylinder2" pos="0.51 0.1 1.5" euler="0 1.5708 0">
+      <freejoint/>
+      <geom type="cylinder" name="cylinder2" size="0.032 0.027 0.01" condim="3"
+        rgba="0.7 0.2 0 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
+    </body>
+    <body name="cylinder3" pos="0.51 0.3 1.5" euler="0 1.5708 0">
+      <freejoint/>
+      <geom type="cylinder" name="cylinder3" size="0.032 0.027 0.01" condim="3"
+        rgba="0.3 0.2 0.7 1" contype="1" conaffinity="1" solref="0.01 1" density="500" friction="0.01 0.003 .0003"/>
+    </body>
+
+
 	</worldbody>
     <contact>
         <exclude body1="chassis" body2="left_wheel" />

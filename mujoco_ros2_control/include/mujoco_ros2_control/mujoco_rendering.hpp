@@ -40,7 +40,7 @@ public:
   void operator=(const MujocoRendering &) = delete;
 
   static MujocoRendering *get_instance();
-  void init(mjModel *mujoco_model, mjData *mujoco_data);
+  void init(mjModel *mujoco_model, mjData *mujoco_data, bool enable_vsync);
   bool is_close_flag_raised();
   void update();
   void close();

@@ -47,7 +47,7 @@ MujocoRendering::MujocoRendering()
 {
 }
 
-void MujocoRendering::init(mjModel *mujoco_model, mjData *mujoco_data)
+void MujocoRendering::init(mjModel *mujoco_model, mjData *mujoco_data, bool enable_vsync)
 {
   mj_model_ = mujoco_model;
   mj_data_ = mujoco_data;
@@ -79,7 +79,7 @@ void MujocoRendering::init(mjModel *mujoco_model, mjData *mujoco_data)
 
   // This might cause tearing, but having RViz and the renderer both open can
   // wreak havoc on the rendering process.
-  glfwSwapInterval(0);
+  glfwSwapInterval(enable_vsync);
 }
 
 bool MujocoRendering::is_close_flag_raised() { return glfwWindowShouldClose(window_); }

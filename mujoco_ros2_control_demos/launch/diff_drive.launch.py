@@ -33,7 +33,9 @@ def generate_launch_description():
         parameters=[
             robot_description,
             controller_config_file,
-            {'mujoco_model_path':os.path.join(mujoco_ros2_control_demos_path, 'mujoco_models', 'test_diff_drive.xml')}
+            {'mujoco_model_path':os.path.join(mujoco_ros2_control_demos_path, 'mujoco_models', 'test_diff_drive.xml')},
+            {'enable_vsync': False},  # Set to True to sync with monitor, False to run uncapped
+            {'use_wall_clock_pacing': True} # Set to True to use wall clock pacing, False for simulation time
         ]
     )
 
